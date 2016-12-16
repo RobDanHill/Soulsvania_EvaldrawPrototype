@@ -1,4 +1,4 @@
-static grav = 150.0;
+static grav = 10.0;
           
 // tiles
 struct { x; y; w; h; } tile_t;
@@ -12,7 +12,7 @@ struct { x; y; xvel; yvel; w; h; grounded; } player_t;
 
 static jump_vel = 250.0;  
 static p_movesp = 100.0;   
-static y_floor = 600;
+static y_floor;
 
 #define true                     1
 #define false                    0
@@ -60,11 +60,13 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
    if ( numframes == 0 ) {
       screenx = 0; screeny = 0;
       tilesizx = 32;
-      tilesizy = 32;      
+      tilesizy = 32;
+      
+      y_floor = yres/2;      
 
       // init the player
       p.x = xres/2;
-      p.y = yres/2;
+      p.y = (yres/2) - 100;
       p.xvel = 0;
       p.yvel = 0;
       p.w = 32;
@@ -91,22 +93,22 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
 scroll ( movspd ) {
    if ( keystatus[0xcb] ) { // Left arrow-key
       if ( screenx < 0 ) {
-         screenx += movspd;
+         //screenx += movspd;
       }
    } 
    if ( keystatus[0xcd] ) { // Right arrow-key
       if ( screenx > xres - tilesizx*WORLD_LENGTH_TILES ) {
-         screenx -= movspd;
+         //screenx -= movspd;
       }
    } 
    if ( keystatus[0xc8] ) {
       if ( screeny < 0 ) {
-         screeny += movspd;
+         //screeny += movspd;
       }
    } 
    if ( keystatus[0xd0] ) {
       if ( screeny > yres - tilesizy*WORLD_HEIGHT_TILES ) {
-         screeny -= movspd;
+         //screeny -= movspd;
       }
    }
 }
@@ -188,19 +190,19 @@ draw_rect( x,y,w,h ) {
 // =========Player Functions==========
 
 // update the player velocity and such
-p_update(player_t p, dt) { 
-   if ( p.y+p.h/2 > y_floor ) {
-      p.y = y_floor - p.h/2;
-   }
-    
-   // apply gravity
-   p_apply_grav(p, dt);
+p_update(player_t p, dt) {    
+      // apply gravity
+      p_apply_grav(p, dt);
    
-   // appl   y movement
-   p_move(p, dt);
+      // appl   y movement
+      p_move(p, dt);
    
-   p.x = p.x + p.xvel * dt;
-   p.y = p.y + p.yvel * dt;
+      p.x = p.x + p.xvel * dt;
+      p.y = p.y + p.yvel * dt;
+      
+      if ( p.y+p.h/2 > y_floor ) {
+         p.y = y_floor - p.h/2;  
+      }
 }
 
 p_move(player_t p, dt) {
