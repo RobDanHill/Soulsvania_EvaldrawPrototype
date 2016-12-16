@@ -1,0 +1,112 @@
+#define true                     1
+#define false                    0
+
+// Change this value to manipulate how many tiles
+// take up the screen width and height
+#define MAX_SCREEN_TILES_ACROSS 12
+
+#define WORLD_LENGTH_TILES      24
+#define WORLD_HEIGHT_TILES      24
+
+static stime, otime, dtime;
+
+static screenx, screeny, screenxres, screenyres, tilesizx, tilesizy;
+
+// 24x24 map; This will be used to test horizontal and vertical scrolling...
+static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+};
+
+() { // The 'main' entry point for the program...
+
+   glenable( GL_ALPHA_TEST );
+
+   if ( numframes == 0 ) {
+      screenxres = xres; screenyres = yres;
+      screenx = 0; screeny = 0;
+      tilesizx = screenxres/MAX_SCREEN_TILES_ACROSS;
+      tilesizy = screenyres/MAX_SCREEN_TILES_ACROSS;
+   }
+
+   while ( true ) {
+      cls( 0 );
+      otime = stime;
+      stime = klock();
+      drawworld();
+      drawplayer();
+      scroll( dtime*256 );
+      dtime = stime - otime;
+      refresh();
+   }
+
+}
+
+scroll ( movspd ) {
+   if ( keystatus[0xcb] ) { // Left arrow-key
+      if ( screenx < 0 ) {
+         screenx += movspd;
+      }
+   } 
+   if ( keystatus[0xcd] ) { // Right arrow-key
+      if ( screenx > screenxres - tilesizx*WORLD_LENGTH_TILES ) {
+         screenx -= movspd;
+      }
+   } 
+   if ( keystatus[0xc8] ) {
+      if ( screeny < 0 ) {
+         screeny += movspd;
+      }
+   } 
+   if ( keystatus[0xd0] ) {
+      if ( screeny > screenyres - tilesizy*WORLD_HEIGHT_TILES ) {
+         screeny -= movspd;
+      }
+   }
+}
+
+drawplayer () {
+   glsettex( "DukeFace_NoBackground.png" );
+   drawspr( screenxres/2, screenyres/2, 32, 32, 0 );
+}
+
+drawworld () {
+   glsettex( "wood.png" );
+   // GL drawing origin starts in middle of sprite
+   spx = screenx + tilesizx/2; spy = screeny + tilesizy/2;
+   for ( y = 0; y < WORLD_HEIGHT_TILES; y++ ) {
+      for ( x = 0; x < WORLD_LENGTH_TILES; x++ ) {
+         if ( world[y][x] == 0 ) {
+            glsettex( "wood.png" );
+         } else if ( world[y][x] = 1 ) {
+            glsettex( "brick.png" );
+         }
+         drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
+         spx += tilesizx;
+      }
+      spx = screenx + tilesizx/2;
+      spy += tilesizy;
+   }
+}
