@@ -56,7 +56,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       otime = stime;
       stime = klock();
       drawworld();
-      drawplayer();
+      //drawplayer();
       scroll( dtime*256 );
       dtime = stime - otime;
       refresh();
