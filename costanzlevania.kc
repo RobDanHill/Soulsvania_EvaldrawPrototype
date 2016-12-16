@@ -8,7 +8,17 @@ struct { x; y; w; h; } rect_t;
 struct { x; y; } vec2d_t;
 
 // the player
-struct { x; y; xvel; yvel; w; h; grounded; } player_t;
+struct { 
+   x; 
+   y;
+   mapx;
+   mapy;
+   rect_t aabb; 
+   xvel; 
+   yvel; 
+   w; 
+   h; 
+   grounded; } player_t;
 
 static jump_vel = 250.0;  
 static p_movesp = 100.0;   
@@ -57,6 +67,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
 
 () { // The 'main' entry point for the program...
    glenable( GL_ALPHA_TEST );
+   
    if ( numframes == 0 ) {
       screenx = 0; screeny = 0;
       tilesizx = 32;
@@ -67,12 +78,21 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       // init the player
       p.x = xres/2;
       p.y = (yres/2) - 100;
+      p.mapx = floor(p.x/tilesizx);
+      p.mapy = floor(p.y/tilesizy);
       p.xvel = 0;
       p.yvel = 0;
       p.w = 32;
       p.h = 48;
+      p.grounded = false;
+      // init player aabb
+      p.aabb.x = p.x;
+      p.aabb.y = p.y;
+      p.aabb.w = p.w;
+      p.aabb.h = p.h;
    
    }
+   
    while ( true ) {
       cls( 0 );
       otime = stime;
@@ -194,15 +214,24 @@ p_update(player_t p, dt) {
       // apply gravity
       p_apply_grav(p, dt);
    
-      // appl   y movement
+      // apply movement
       p_move(p, dt);
    
       p.x = p.x + p.xvel * dt;
       p.y = p.y + p.yvel * dt;
       
-      if ( p.y+p.h/2 > y_floor ) {
+      if ( p.y+p.h/2 >= y_floor ) {
          p.y = y_floor - p.h/2;  
       }
+      
+      p.mapx = floor( p.x/tilesizx );
+      p.mapy = floor( p.y/tilesizy );
+      
+      // let's draw some debug nums
+      moveto( p.x, p.y-(p.h/2)-10 );
+      printf( "x: %f, y: %f", p.x, p.y );
+      moveto( p.x, p.y-(p.h/2)-20 );
+      printf( "mapx: %f, mapy: %f", p.mapx, p.mapy );
 }
 
 p_move(player_t p, dt) {
