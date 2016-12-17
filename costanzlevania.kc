@@ -2,11 +2,9 @@ static grav = 10.0;
           
 // tiles
 struct { x; y; w; h; } tile_t;
-
 // Rect, rather an aabb
 struct { x; y; w; h; } rect_t;
 struct { x; y; } vec2d_t;
-
 // the player
 struct { 
    x; 
@@ -21,7 +19,7 @@ struct {
    grounded; } player_t;
 
 static jump_vel = 250.0;  
-static p_movesp = 100.0;   
+static p_movesp = 200.0;   
 static y_floor;
 
 #define true                     1
@@ -102,10 +100,14 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       //drawplayer( p.x, p.y, 32, 48 );
       // Draw a simple rect to be the player for now
       draw_rect( p.x, p.y, p.w, p.h );
+      // draw the center of the player too.
+      moveto( p.x-1, p.y );
+      lineto( p.x+1, p.y );        
+
       p_move(p, dtime);
       p_update(p, dtime);
-      scroll( dtime*256 );
-      dtime = stime - otime;
+      scroll( dtime*256 );  
+      dtime = stime - otime;    
       refresh();
    }
 }
@@ -247,7 +249,7 @@ p_move(player_t p, dt) {
    if (keystatus[0xcb] == 0
       && keystatus[0xcd] == 0) {
       p.xvel = 0;
-   }    
+   }                    
             
    if (keystatus[0x39] == 1) { 
       p_jump(p, dt);
@@ -263,10 +265,11 @@ p_apply_grav(player_t p, dt) {
    p.yvel = p.yvel + grav;
 } 
 
-// ====== Collision Functions =======
-// Special case of SAT algorithm for
+
+// Collision Functions =======================
+// Special case of SAT algorithm for     
 // AABB's only.
-aabb_collision ( rect_t a, rect_t b, vec2d_t offset ) { 
+aabb_collision ( rect_t a, rect_t b ) { 
 
 }
 
@@ -275,7 +278,7 @@ overlapping ( rect_t a, rect_t b ) {
            (a.y < b.y+b.h && a.y+a.h > b.y))
 }
 
-// ======== vector maths ========
+// vector maths ==============================
 project ( vec2d_t u, vec2d_t v, vec2d_t res ) {
    // [(u dot v)/(u dot u)]*u
    udv = dot( u, v );
