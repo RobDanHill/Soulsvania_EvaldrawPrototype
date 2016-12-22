@@ -63,7 +63,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       cls( 0 );
       otime = stime;
       stime = klock();
-      drawworld();
+      drawworld_opt();
       //drawminimap( 8, 20, 20 );
       drawminimap_opt( 8, 20, 20 );
       //drawplayer();
@@ -127,6 +127,29 @@ drawworld () {
          spx += tilesizx;
       }
       spx = screenx + tilesizx/2;
+      spy += tilesizy;
+   }
+}
+
+drawworld_opt () {
+   glsettex( "wood.png" );
+   tx = int(currtile.x); ty = int(currtile.y);
+   // GL drawing origin starts in middle of sprite
+   spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2; 
+   spy = screeny + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES &&
+            y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
+      for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES &&
+               x < ( tx+MAX_SCREEN_TILES_ACROSS+1 ); x++ ) {
+         if ( world[y][x] == 0 ) {
+            glsettex( "wood.png" );
+         } else if ( world[y][x] = 1 ) {
+            glsettex( "brick.png" );
+         }
+         drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
+         spx += tilesizx;
+      }
+      spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2;
       spy += tilesizy;
    }
 }
