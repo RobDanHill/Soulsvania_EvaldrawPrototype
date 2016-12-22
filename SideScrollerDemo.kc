@@ -202,8 +202,8 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
    moveto( xres - 100, 75 );
    printf( "ty: %g", ty );
    
-   spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
-   spy = yres - ypad - ( WORLD_HEIGHT_TILES - ty )*newtilesizy + newtilesizy/2;
+   spx = xres - xpad - ( WORLD_LENGTH_TILES - max( 0, tx-1 ) )*newtilesizx + newtilesizx/2;
+   spy = yres - ypad - ( WORLD_HEIGHT_TILES - max( 0, ty-1 ) )*newtilesizy + newtilesizy/2;
    
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES && 
          y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
@@ -215,7 +215,7 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
          spx += newtilesizx;
       }
       // Reset the xpos
-      spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
+      spx = xres - xpad - ( WORLD_LENGTH_TILES - max( 0, tx-1 ) )*newtilesizx + newtilesizx/2;
       spy += newtilesizy;
    }
    
