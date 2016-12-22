@@ -75,31 +75,33 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
 }
 
 scroll ( movspd ) {
+   moveto( xres - 100, 25 );
+   printf( "movspd: %g", movspd );
    if ( keystatus[0xcb] ) { // Left arrow-key
       if ( screenx < 0 ) {
          screenx += movspd;
-         currtile.x += movspd;
+         currtile.x -= movspd/tilesizx;
          minispx -= movspd/scale;
       }
    } 
    if ( keystatus[0xcd] ) { // Right arrow-key
       if ( screenx > screenxres - tilesizx*WORLD_LENGTH_TILES ) {
          screenx -= movspd;
-         currtile.x -= movspd;
+         currtile.x += movspd/tilesizx;
          minispx += movspd/scale;
       }
    } 
    if ( keystatus[0xc8] ) {
       if ( screeny < 0 ) {
          screeny += movspd;
-         currtile.y += movspd;
+         currtile.y -= movspd/tilesizy;
          minispy -= movspd/scale;
       }
    } 
    if ( keystatus[0xd0] ) {
       if ( screeny > screenyres - tilesizy*WORLD_HEIGHT_TILES ) {
          screeny -= movspd;
-         currtile.y -= movspd;
+         currtile.y += movspd/tilesizy;
          minispy += movspd/scale;
       }
    }
@@ -152,6 +154,14 @@ drawminimap ( miniscale, xpad, ypad ) {
    }
    newtilesizx = tilesizx/scale;
    newtilesizy = tilesizy/scale;
+   
+   tx = int(currtile.x); ty = int(currtile.y);
+   
+   moveto( xres - 100, 50 );
+   printf( "tx: %g", tx );
+   moveto( xres - 100, 75 );
+   printf( "ty: %g", ty );
+
    // Rect drawing starts from what would be the top left corner of the rect
    spx = xres - xpad - WORLD_LENGTH_TILES*newtilesizx + newtilesizx/2;
    spy = yres - ypad - WORLD_HEIGHT_TILES*newtilesizy + newtilesizy/2;
@@ -187,11 +197,18 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
    
    tx = int(currtile.x); ty = int(currtile.y);
    
+   moveto( xres - 100, 50 );
+   printf( "tx: %g", tx );
+   moveto( xres - 100, 75 );
+   printf( "ty: %g", ty );
+   
    spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
    spy = yres - ypad - ( WORLD_HEIGHT_TILES - ty )*newtilesizy + newtilesizy/2;
    
-   for ( y = ty - 1; y < WORLD_HEIGHT_TILES; y++ ) {
-      for ( x = tx - 1; ; x++ ) {
+   for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES && 
+         y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
+      for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES && 
+         x < ( tx+MAX_SCREEN_TILES_ACROSS+1 ); x++ ) {
          if ( world[y][x] == 1 ) {
             draw_rect( spx, spy, newtilesizx, newtilesizy );
          }
@@ -201,6 +218,21 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
       spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
       spy += newtilesizy;
    }
+   
+   if ( numframes == 0 ) {
+      minispx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + 
+                 MAX_SCREEN_TILES_ACROSS*newtilesizx/2;
+      minispy = yres - ypad - ( WORLD_HEIGHT_TILES - ty )*newtilesizy + 
+                 MAX_SCREEN_TILES_ACROSS*newtilesizy/2;
+   }
+   
+   // Draw the viewport rectangle
+   draw_rect( 
+      minispx, 
+      minispy, 
+      MAX_SCREEN_TILES_ACROSS*newtilesizx, 
+      MAX_SCREEN_TILES_ACROSS*newtilesizy 
+   );
 }
 
 // modify this to treat x,y as the center
