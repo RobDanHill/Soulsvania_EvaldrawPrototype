@@ -17,7 +17,7 @@ static screenx, screeny, minispx, minispy,
        
 // Use this to determine the top-left corner that the viewport
 // begins drawing at...
-static vec2d_t currtile;
+static vec2d_t currtile, parallax;
 
 // 24x24 map; This will be used to test horizontal and vertical scrolling...
 static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
@@ -55,6 +55,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       screenxres = xres; screenyres = yres;
       screenx = 0; screeny = 0;
       currtile.x = 0; currtile.y = 0;
+      parallax.x = 0; parallax.y = 0;
       tilesizx = screenxres/MAX_SCREEN_TILES_ACROSS;
       tilesizy = screenyres/MAX_SCREEN_TILES_ACROSS;
    }
@@ -80,6 +81,7 @@ scroll ( movspd ) {
    if ( keystatus[0xcb] ) { // Left arrow-key
       if ( screenx < 0 ) {
          screenx += movspd;
+         parallax.x += movspd/scale;
          currtile.x -= movspd/tilesizx;
          minispx -= movspd/scale;
       }
@@ -87,6 +89,7 @@ scroll ( movspd ) {
    if ( keystatus[0xcd] ) { // Right arrow-key
       if ( screenx > screenxres - tilesizx*WORLD_LENGTH_TILES ) {
          screenx -= movspd;
+         parallax.x -= movspd/scale;
          currtile.x += movspd/tilesizx;
          minispx += movspd/scale;
       }
@@ -94,6 +97,7 @@ scroll ( movspd ) {
    if ( keystatus[0xc8] ) {
       if ( screeny < 0 ) {
          screeny += movspd;
+         parallax.y += movspd/scale;
          currtile.y -= movspd/tilesizy;
          minispy -= movspd/scale;
       }
@@ -101,6 +105,7 @@ scroll ( movspd ) {
    if ( keystatus[0xd0] ) {
       if ( screeny > screenyres - tilesizy*WORLD_HEIGHT_TILES ) {
          screeny -= movspd;
+         parallax.y -= movspd/scale;
          currtile.y += movspd/tilesizy;
          minispy += movspd/scale;
       }
@@ -132,25 +137,36 @@ drawworld () {
 }
 
 drawworld_opt () {
-   glsettex( "wood.png" );
    tx = int(currtile.x); ty = int(currtile.y);
    // GL drawing origin starts in middle of sprite
    spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2; 
    spy = screeny + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
+   paray = screeny + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES &&
             y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES &&
                x < ( tx+MAX_SCREEN_TILES_ACROSS+1 ); x++ ) {
+               
+         /* Parallax background layer drawing code */
+         //glsettex( "wood.png" );
+         //drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
+
          if ( world[y][x] == 0 ) {
             glsettex( "wood.png" );
+            //drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
          } else if ( world[y][x] = 1 ) {
             glsettex( "brick.png" );
+            //drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
          }
          drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
          spx += tilesizx;
+         parax += tilesizx;
       }
       spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2;
+      parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
       spy += tilesizy;
+      paray += tilesizy;
    }
 }
 
