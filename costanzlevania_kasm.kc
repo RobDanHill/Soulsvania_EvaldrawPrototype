@@ -1,0 +1,1033 @@
+Optimized: No
+
+; Func start: @unnamed
+   pushd gl`alpha`test
+    call glenable 
+     pop stack, 0*4 + 1*8
+     mov reg0, numframes
+     cmp reg0, 0
+     jnz #1
+#0:
+     mov reg0, 0
+     mov screenx, reg0
+     mov screeny, reg0
+     mov reg0, 32
+     mov tilesizx, reg0
+     mov tilesizy, reg0
+     mov reg0, yres
+     mul reg0, 0.5
+     mov y`floor, reg0
+     mov reg0, xres
+     mul reg0, 0.5
+  idxset 0
+     mov p[idx], reg0
+     mov reg0, yres
+     mul reg0, 0.5
+     sub reg0, 100
+  idxset 1
+     mov p[idx], reg0
+  idxset 0
+     mov reg0, p[idx]
+     div reg0, 32
+push_fpu reg0
+  idxset 2
+    call floor -> ret[idx]
+     pop stack, 0*4 + 1*8
+  idxset 1
+     mov reg0, p[idx]
+     div reg0, tilesizy
+push_fpu reg0
+  idxset 3
+    call floor -> ret[idx]
+     pop stack, 0*4 + 1*8
+     mov reg0, 0
+  idxset 8
+     mov p[idx], reg0
+  idxset 9
+     mov p[idx], reg0
+     mov reg0, 32
+  idxset 10
+     mov p[idx], reg0
+     mov reg0, 64
+  idxset 11
+     mov p[idx], reg0
+     mov reg0, 0
+  idxset 12
+     mov p[idx], reg0
+  idxset 0
+     mov reg0, p[idx]
+  idxset 4
+     mov p[idx], reg0
+  idxset 1
+     mov reg0, p[idx]
+  idxset 5
+     mov p[idx], reg0
+  idxset 10
+     mov reg0, p[idx]
+  idxset 6
+     mov p[idx], reg0
+  idxset 11
+     mov reg0, p[idx]
+  idxset 7
+     mov p[idx], reg0
+#1:
+#3:
+   pushd 0
+    call cls 
+     pop stack, 0*4 + 1*8
+     mov reg0, stime
+     mov otime, reg0
+    call klock -> ret
+    call drawdebugmap 
+   align stack
+  idxset 0
+    push offset p[idx]
+    call draw`debugplayer 
+     pop stack, 1*4 + 0*8
+   align stack
+   pushd dtime
+  idxset 0
+    push offset p[idx]
+    call p`move 
+     pop stack, 1*4 + 1*8
+   align stack
+   pushd dtime
+  idxset 0
+    push offset p[idx]
+    call p`update 
+     pop stack, 1*4 + 1*8
+   align stack
+  idxset 0
+    push offset p[idx]
+    call vel`collision 
+     pop stack, 1*4 + 0*8
+     mov reg0, dtime
+     mul reg0, 256
+   pushd reg0
+    call scroll 
+     pop stack, 0*4 + 1*8
+     mov reg0, stime
+     sub reg0, otime
+     mov dtime, reg0
+    call refresh 
+     jmp #3
+#4:
+push_fpu 0
+     ret 
+; Func end: @unnamed
+
+; Func start: scroll
+  idxset 203, 256
+     mov reg0, keystatus[idx]
+     mov reg1, 0
+     cmp reg0, reg1
+      jz #7
+#6:
+     mov reg0, screenx
+     cmp reg0, 0
+     jae #10
+#9:
+#10:
+#7:
+  idxset 205, 256
+     mov reg0, keystatus[idx]
+     mov reg1, 0
+     cmp reg0, reg1
+      jz #13
+#12:
+     mov reg0, xres
+     mov reg1, tilesizx
+     mul reg1, 24
+     sub reg0, reg1
+     cmp reg0, screenx
+     jae #16
+#15:
+#16:
+#13:
+  idxset 200, 256
+     mov reg0, keystatus[idx]
+     mov reg1, 0
+     cmp reg0, reg1
+      jz #19
+#18:
+     mov reg0, screeny
+     cmp reg0, 0
+     jae #22
+#21:
+#22:
+#19:
+  idxset 208, 256
+     mov reg0, keystatus[idx]
+     mov reg1, 0
+     cmp reg0, reg1
+      jz #25
+#24:
+     mov reg0, yres
+     mov reg1, tilesizy
+     mul reg1, 24
+     sub reg0, reg1
+     cmp reg0, screeny
+     jae #28
+#27:
+#28:
+#25:
+push_fpu 0
+     ret 
+; Func end: scroll
+
+; Func start: drawplayer
+   pushd 0
+    call glsettex 
+     pop stack, 0*4 + 1*8
+   pushd 0
+   pushd 48
+   pushd 32
+   pushd y
+   pushd x
+    call drawspr -> FPU 
+     pop stack, 0*4 + 5*8
+     ret 
+; Func end: drawplayer
+
+; Func start: draw`debugplayer
+push idx 
+  idxset 4
+    push offset p[idx]
+ pop idx 
+  idxset 0, 1
+    push offset aabb[idx]
+  memcpy 32, 1
+  idxset 2, 3
+   pushd p`debugcol[idx]
+  idxset 1, 3
+   pushd p`debugcol[idx]
+  idxset 0, 3
+   pushd p`debugcol[idx]
+    call setcol 
+     pop stack, 0*4 + 3*8
+  idxset 11
+   pushd p[idx]
+  idxset 10
+   pushd p[idx]
+  idxset 1
+   pushd p[idx]
+  idxset 0
+   pushd p[idx]
+    call draw`rect 
+     pop stack, 0*4 + 4*8
+     mov reg0, 255
+  idxset 0, 3
+     mov p`debugcol[idx], reg0
+  idxset 1, 3
+     mov p`debugcol[idx], reg0
+  idxset 2, 3
+     mov p`debugcol[idx], reg0
+  idxset 3
+   pushd aabb[idx]
+  idxset 2
+   pushd aabb[idx]
+  idxset 1
+   pushd aabb[idx]
+  idxset 0
+   pushd aabb[idx]
+    call draw`rect 
+     pop stack, 0*4 + 4*8
+   pushd 255
+   pushd 255
+   pushd 255
+    call setcol 
+     pop stack, 0*4 + 3*8
+  idxset 1
+   pushd p[idx]
+  idxset 0
+   pushd p[idx]
+    call setpix 
+     pop stack, 0*4 + 2*8
+  idxset 0
+     mov reg0, p[idx]
+     div reg0, tilesizx
+push_fpu reg0
+    call floor -> reg0
+     pop stack, 0*4 + 1*8
+     add reg0, 1
+  idxset 2
+     mov p[idx], reg0
+  idxset 1
+     mov reg0, p[idx]
+     div reg0, tilesizy
+push_fpu reg0
+    call floor -> reg0
+     pop stack, 0*4 + 1*8
+     add reg0, 1
+  idxset 3
+     mov p[idx], reg0
+  idxset 1
+     mov reg0, p[idx]
+  idxset 11
+     mov reg1, p[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+     sub reg0, 10
+   pushd reg0
+  idxset 0
+   pushd p[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+   align stack
+  idxset 1
+     mov reg0, p[idx]
+     int reg0 -> reg0
+   pushd reg0
+  idxset 0
+     mov reg0, p[idx]
+     int reg0 -> reg0
+   pushd reg0
+    push offset $(1)
+    call printf 
+     pop stack, 1*4 + 2*8
+  idxset 1
+     mov reg0, p[idx]
+  idxset 11
+     mov reg1, p[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+     sub reg0, 20
+   pushd reg0
+  idxset 0
+   pushd p[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+   align stack
+  idxset 3
+   pushd p[idx]
+  idxset 2
+   pushd p[idx]
+    push offset $(2)
+    call printf 
+     pop stack, 1*4 + 2*8
+  idxset 1
+     mov reg0, p[idx]
+  idxset 11
+     mov reg1, p[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+     sub reg0, 30
+   pushd reg0
+  idxset 0
+   pushd p[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+   align stack
+  idxset 9
+   pushd p[idx]
+  idxset 8
+   pushd p[idx]
+    push offset $(3)
+    call printf -> FPU 
+     pop stack, 1*4 + 2*8
+     ret 
+; Func end: draw`debugplayer
+
+; Func start: drawworld
+   pushd 1
+    call glsettex 
+     pop stack, 0*4 + 1*8
+     mov reg0, tilesizx
+     mul reg0, 0.5
+     add reg0, screenx
+     mov spx, reg0
+     mov reg0, tilesizy
+     mul reg0, 0.5
+     add reg0, screeny
+     mov spy, reg0
+     mov reg0, 0
+     mov y, reg0
+#30:
+     mov reg0, 0
+     mov x, reg0
+#33:
+  idxset y, 24
+  idxadd x, 24
+     mov reg0, world[idx]
+     cmp reg0, 0
+     jnz #37
+#36:
+   pushd 1
+    call glsettex 
+     pop stack, 0*4 + 1*8
+     jmp #38
+#37:
+     mov reg0, 1
+  idxset y, 24
+  idxadd x, 24
+     mov world[idx], reg0
+#39:
+   pushd 2
+    call glsettex 
+     pop stack, 0*4 + 1*8
+#40:
+#38:
+   pushd 0
+     mov reg0, tilesizy
+     mul reg0, 0.5
+   pushd reg0
+     mov reg0, tilesizx
+     mul reg0, 0.5
+   pushd reg0
+   pushd spy
+   pushd spx
+    call drawspr 
+     pop stack, 0*4 + 5*8
+     mov reg0, spx
+     add reg0, tilesizx
+     mov spx, reg0
+     mov reg0, x
+     add reg0, 1
+     mov x, reg0
+     cmp reg0, 24
+      jb #33
+#34:
+     mov reg0, tilesizx
+     mul reg0, 0.5
+     add reg0, screenx
+     mov spx, reg0
+     mov reg0, spy
+     add reg0, tilesizy
+     mov spy, reg0
+     mov reg0, y
+     add reg0, 1
+     mov y, reg0
+     cmp reg0, 24
+      jb #30
+#31:
+push_fpu 0
+     ret 
+; Func end: drawworld
+
+; Func start: drawdebugmap
+     mov reg0, tilesizx
+     mul reg0, 0.5
+     add reg0, screenx
+     mov spx, reg0
+     mov reg0, tilesizy
+     mul reg0, 0.5
+     add reg0, screeny
+     mov spy, reg0
+     mov reg0, 0
+     mov y, reg0
+#42:
+     mov reg0, 0
+     mov x, reg0
+#45:
+  idxset y, 24
+  idxadd x, 24
+     mov reg0, world[idx]
+     cmp reg0, 1
+     jnz #49
+#48:
+   pushd tilesizy
+   pushd tilesizx
+   pushd spy
+   pushd spx
+    call draw`rect 
+     pop stack, 0*4 + 4*8
+   pushd 255
+   pushd 0
+   pushd 255
+    call setcol 
+     pop stack, 0*4 + 3*8
+   pushd spy
+   pushd spx
+    call setpix 
+     pop stack, 0*4 + 2*8
+   pushd 255
+   pushd 255
+   pushd 255
+    call setcol 
+     pop stack, 0*4 + 3*8
+#49:
+     mov reg0, spx
+     add reg0, tilesizx
+     mov spx, reg0
+     mov reg0, x
+     add reg0, 1
+     mov x, reg0
+     cmp reg0, 24
+      jb #45
+#46:
+     mov reg0, tilesizx
+     mul reg0, 0.5
+     add reg0, screenx
+     mov spx, reg0
+     mov reg0, spy
+     add reg0, tilesizy
+     mov spy, reg0
+     mov reg0, y
+     add reg0, 1
+     mov y, reg0
+     cmp reg0, 24
+      jb #42
+#43:
+push_fpu 0
+     ret 
+; Func end: drawdebugmap
+
+; Func start: draw`rect
+     mov reg0, w
+     mul reg0, 0.5
+     mov hw, reg0
+     mov reg0, h
+     mul reg0, 0.5
+     mov hh, reg0
+     mov reg0, x
+     sub reg0, hw
+  idxset 0
+     mov p1[idx], reg0
+     mov reg0, y
+     sub reg0, hh
+  idxset 1
+     mov p1[idx], reg0
+     mov reg0, x
+     add reg0, hw
+  idxset 0
+     mov p2[idx], reg0
+     mov reg0, y
+     sub reg0, hh
+  idxset 1
+     mov p2[idx], reg0
+     mov reg0, x
+     add reg0, hw
+  idxset 0
+     mov p3[idx], reg0
+     mov reg0, y
+     add reg0, hh
+  idxset 1
+     mov p3[idx], reg0
+     mov reg0, x
+     sub reg0, hw
+  idxset 0
+     mov p4[idx], reg0
+     mov reg0, y
+     add reg0, hh
+  idxset 1
+     mov p4[idx], reg0
+  idxset 1
+   pushd p1[idx]
+  idxset 0
+   pushd p1[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p2[idx]
+  idxset 0
+   pushd p2[idx]
+    call lineto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p2[idx]
+  idxset 0
+   pushd p2[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p3[idx]
+  idxset 0
+   pushd p3[idx]
+    call lineto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p3[idx]
+  idxset 0
+   pushd p3[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p4[idx]
+  idxset 0
+   pushd p4[idx]
+    call lineto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p4[idx]
+  idxset 0
+   pushd p4[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+  idxset 1
+   pushd p1[idx]
+  idxset 0
+   pushd p1[idx]
+    call lineto -> FPU 
+     pop stack, 0*4 + 2*8
+     ret 
+; Func end: draw`rect
+
+; Func start: p`update
+   align stack
+   pushd dt
+  idxset 0
+    push offset p[idx]
+    call p`apply`grav 
+     pop stack, 1*4 + 1*8
+   align stack
+   pushd dt
+  idxset 0
+    push offset p[idx]
+    call p`move 
+     pop stack, 1*4 + 1*8
+  idxset 0
+     mov reg0, p[idx]
+  idxset 8
+     mov reg1, p[idx]
+     mul reg1, dt
+     add reg0, reg1
+  idxset 0
+     mov p[idx], reg0
+  idxset 1
+     mov reg0, p[idx]
+  idxset 9
+     mov reg1, p[idx]
+     mul reg1, dt
+     add reg0, reg1
+  idxset 1
+     mov p[idx], reg0
+  idxset 1
+     mov reg0, p[idx]
+  idxset 11
+     mov reg1, p[idx]
+     mul reg1, 0.5
+     add reg0, reg1
+     cmp reg0, y`floor
+      jb #52
+#51:
+     mov reg0, y`floor
+  idxset 11
+     mov reg1, p[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+  idxset 1
+     mov p[idx], reg0
+#52:
+  idxset 0
+     mov reg0, p[idx]
+  idxset 4
+     mov p[idx], reg0
+  idxset 1
+     mov reg0, p[idx]
+  idxset 5
+     mov p[idx], reg0
+push_fpu p[idx]
+     ret 
+; Func end: p`update
+
+; Func start: p`move
+  idxset 203, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 1
+     jnz #55
+#54:
+     mov reg0, p`movesp
+     mul reg0, -1
+  idxset 8
+     mov p[idx], reg0
+#55:
+  idxset 205, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 1
+     jnz #58
+#57:
+     mov reg0, p`movesp
+  idxset 8
+     mov p[idx], reg0
+#58:
+  idxset 203, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 0
+     jnz #61
+  idxset 205, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 0
+     jnz #61
+#60:
+     mov reg0, 0
+  idxset 8
+     mov p[idx], reg0
+#61:
+  idxset 57, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 1
+     jnz #64
+#63:
+   align stack
+   pushd dt
+  idxset 0
+    push offset p[idx]
+    call p`jump 
+     pop stack, 1*4 + 1*8
+#64:
+  idxset 200, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 1
+     jnz #67
+#66:
+  idxset 1
+     mov reg0, p[idx]
+     sub reg0, 1
+     mov p[idx], reg0
+#67:
+  idxset 208, 256
+     mov reg0, keystatus[idx]
+     cmp reg0, 1
+     jnz #70
+#69:
+  idxset 1
+     mov reg0, p[idx]
+     add reg0, 1
+     mov p[idx], reg0
+#70:
+push_fpu 0
+     ret 
+; Func end: p`move
+
+; Func start: p`jump
+     mov reg0, jump`vel
+     mul reg0, -1
+  idxset 9
+     mov p[idx], reg0
+push_fpu p[idx]
+     ret 
+; Func end: p`jump
+
+; Func start: p`apply`grav
+  idxset 9
+     mov reg0, p[idx]
+     add reg0, grav
+  idxset 9
+     mov p[idx], reg0
+push_fpu p[idx]
+     ret 
+; Func end: p`apply`grav
+
+; Func start: vel`collision
+push idx 
+  idxset 4
+    push offset p`t[idx]
+ pop idx 
+  idxset 0, 1
+    push offset a`t[idx]
+  memcpy 32, 1
+  idxset 8
+     mov reg0, p`t[idx]
+     mov velx, reg0
+  idxset 9
+     mov reg0, p`t[idx]
+     mov vely, reg0
+     mov reg0, 0
+     mov y, reg0
+#72:
+     mov reg0, 0
+     mov x, reg0
+#75:
+  idxset y, 24
+  idxadd x, 24
+     mov reg0, world[idx]
+     cmp reg0, 1
+     jnz #79
+#78:
+     mov reg0, x
+     mul reg0, tilesizx
+     mov reg1, tilesizx
+     mul reg1, 0.5
+     add reg0, reg1
+  idxset 0
+     mov b`t[idx], reg0
+     mov reg0, y
+     mul reg0, tilesizy
+     mov reg1, tilesizy
+     mul reg1, 0.5
+     add reg0, reg1
+  idxset 1
+     mov b`t[idx], reg0
+     mov reg0, tilesizx
+  idxset 2
+     mov b`t[idx], reg0
+     mov reg0, tilesizy
+  idxset 3
+     mov b`t[idx], reg0
+  idxset 0
+    push offset b`t[idx]
+  idxset 0
+    push offset a`t[idx]
+    call overlapping -> reg3790
+     pop stack, 2*4 + 0*8
+     cmp reg0, 0
+      jz #82
+#81:
+  idxset 1
+   pushd b`t[idx]
+  idxset 0
+   pushd b`t[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+   pushd 255
+   pushd 0
+   pushd 255
+    call setcol 
+     pop stack, 0*4 + 3*8
+   align stack
+  idxset 1
+   pushd b`t[idx]
+  idxset 0
+   pushd b`t[idx]
+    push offset $(6)
+    call printf 
+     pop stack, 1*4 + 2*8
+     mov reg0, 255
+  idxset 0, 3
+     mov p`debugcol[idx], reg0
+     mov reg0, 0
+  idxset 1, 3
+     mov p`debugcol[idx], reg0
+     mov reg0, 255
+  idxset 2, 3
+     mov p`debugcol[idx], reg0
+#82:
+  idxset 0
+     mov reg0, a`t[idx]
+  idxset 2
+     mov reg1, a`t[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+     add reg0, velx
+  idxset 0
+     mov reg1, b`t[idx]
+  idxset 2
+     mov reg2, b`t[idx]
+     mul reg2, 0.5
+     add reg1, reg2
+     add reg1, velx
+     cmp reg0, reg1
+     jae #85
+  idxset 0
+     mov reg0, a`t[idx]
+  idxset 2
+     mov reg1, a`t[idx]
+     mul reg1, 0.5
+     add reg0, reg1
+     add reg0, velx
+  idxset 0
+     mov reg1, b`t[idx]
+  idxset 2
+     mov reg2, b`t[idx]
+     mul reg2, 0.5
+     sub reg1, reg2
+     add reg1, velx
+     cmp reg0, reg1
+     jbe #85
+  idxset 1
+     mov reg0, a`t[idx]
+  idxset 3
+     mov reg1, a`t[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+     add reg0, vely
+  idxset 1
+     mov reg1, b`t[idx]
+  idxset 3
+     mov reg2, b`t[idx]
+     mul reg2, 0.5
+     add reg1, reg2
+     add reg1, vely
+     cmp reg0, reg1
+     jae #85
+  idxset 1
+     mov reg0, a`t[idx]
+  idxset 3
+     mov reg1, a`t[idx]
+     mul reg1, 0.5
+     add reg0, reg1
+     add reg0, vely
+  idxset 1
+     mov reg1, b`t[idx]
+  idxset 3
+     mov reg2, b`t[idx]
+     mul reg2, 0.5
+     sub reg1, reg2
+     add reg1, vely
+     cmp reg0, reg1
+     jbe #85
+#84:
+  idxset 1
+   pushd a`t[idx]
+  idxset 0
+   pushd a`t[idx]
+    call moveto 
+     pop stack, 0*4 + 2*8
+   align stack
+    push offset $(7)
+    call printf 
+     pop stack, 1*4 + 0*8
+#85:
+  idxset 1
+   pushd b`t[idx]
+  idxset 0
+   pushd b`t[idx]
+    call setpix 
+     pop stack, 0*4 + 2*8
+#79:
+     mov reg0, x
+     add reg0, 1
+     mov x, reg0
+     cmp reg0, 24
+      jb #75
+#76:
+     mov reg0, y
+     add reg0, 1
+     mov y, reg0
+     cmp reg0, 24
+      jb #72
+#73:
+push_fpu 0
+     ret 
+; Func end: vel`collision
+
+; Func start: overlapping
+push_fpu 0
+  idxset 0
+     mov reg0, a[idx]
+  idxset 2
+     mov reg1, a[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+  idxset 0
+     mov reg1, b[idx]
+  idxset 2
+     mov reg2, b[idx]
+     mul reg2, 0.5
+     add reg1, reg2
+     cmp reg0, reg1
+     jae #88
+  idxset 0
+     mov reg0, a[idx]
+  idxset 2
+     mov reg1, a[idx]
+     mul reg1, 0.5
+     add reg0, reg1
+  idxset 0
+     mov reg1, b[idx]
+  idxset 2
+     mov reg2, b[idx]
+     mul reg2, 0.5
+     sub reg1, reg2
+     cmp reg0, reg1
+     jbe #88
+  idxset 1
+     mov reg0, a[idx]
+  idxset 3
+     mov reg1, a[idx]
+     mul reg1, 0.5
+     sub reg0, reg1
+  idxset 1
+     mov reg1, b[idx]
+  idxset 3
+     mov reg2, b[idx]
+     mul reg2, 0.5
+     add reg1, reg2
+     cmp reg0, reg1
+     jae #88
+  idxset 1
+     mov reg0, a[idx]
+  idxset 3
+     mov reg1, a[idx]
+     mul reg1, 0.5
+     add reg0, reg1
+  idxset 1
+     mov reg1, b[idx]
+  idxset 3
+     mov reg2, b[idx]
+     mul reg2, 0.5
+     sub reg1, reg2
+     cmp reg0, reg1
+     jbe #88
+#87:
+     pop fpu
+push_fpu 1
+#88:
+     ret 
+; Func end: overlapping
+
+; Func start: project
+  idxset 0
+    push offset v[idx]
+  idxset 0
+    push offset u[idx]
+    call dot -> ret
+     pop stack, 2*4 + 0*8
+  idxset 0
+    push offset v[idx]
+  idxset 0
+    push offset v[idx]
+    call dot -> ret
+     pop stack, 2*4 + 0*8
+     mov reg0, udv
+     div reg0, vdv
+  idxset 0
+     mov reg1, v[idx]
+     mul reg0, reg1
+  idxset 0
+     mov res[idx], reg0
+     mov reg0, udv
+     div reg0, vdv
+  idxset 1
+     mov reg1, v[idx]
+     mul reg0, reg1
+  idxset 1
+     mov res[idx], reg0
+push_fpu res[idx]
+     ret 
+; Func end: project
+
+; Func start: dot
+  idxset 0
+     mov reg0, u[idx]
+  idxset 0
+     mov reg1, v[idx]
+     mul reg0, reg1
+  idxset 1
+     mov reg1, u[idx]
+  idxset 1
+     mov reg2, v[idx]
+     mul reg1, reg2
+     add reg0, reg1
+push_fpu reg0
+     ret 
+; Func end: dot
+
+; Func start: dot`2d
+     mov reg0, x1
+     mul reg0, x2
+     mov reg1, y1
+     mul reg1, y2
+     add reg0, reg1
+push_fpu reg0
+     ret 
+; Func end: dot`2d
+
+; Func start: len
+  idxset 0
+     mov reg0, u[idx]
+  idxset 0
+     mov reg1, u[idx]
+     mul reg0, reg1
+  idxset 1
+     mov reg1, u[idx]
+  idxset 1
+     mov reg2, u[idx]
+     mul reg1, reg2
+     add reg0, reg1
+push_fpu reg0
+    call sqrt -> FPU 
+     pop stack, 0*4 + 1*8
+     ret 
+; Func end: len
+; End of code 

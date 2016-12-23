@@ -101,8 +101,8 @@ static rect_t r2;
    
    // check for collision     
    col = overlapping( r1, r2 );
-   vec2d_t off;
-   aabb_collision( r2, r1, off );
+   //vec2d_t off;
+   //aabb_collision( r2, r1, off );
    // move r1 to off
    moveto( mousx, mousy + 40 );
    printf( "offset x: %f, y: %f", r1.x, r1.y );
@@ -160,12 +160,6 @@ projectrect ( rect_t r, vec2d_t axis ) {
    
    vec2d_t proj2;
    project( p3, axis, proj2 );
-   
-   // draw the first vec
-   /*setcol( 0,255,0 );
-   moveto( xres/2, yres/2 );
-   lineto( proj1.x-r.w/2, yres/2 );
-   */
 
    // draw diff between proj1 and proj2
    setcol( 0,0,255 );
