@@ -143,30 +143,37 @@ drawworld_opt () {
    spy = screeny + max( 0, ty-1 )*tilesizy + tilesizy/2;
    parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
    paray = screeny + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   
+   /* Parallax drawing code goes here... */
+   glsettex( "wood.png" );
+   for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES+1 &&
+            y < ( ty+MAX_SCREEN_TILES_ACROSS+3 ); y++ ) {
+      for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES+1 &&
+               x < ( tx+MAX_SCREEN_TILES_ACROSS+3 ); x++ ) {
+         
+         drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
+
+         parax += tilesizx;
+      }
+      parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
+      paray += tilesizy;
+   }
+   
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES &&
             y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES &&
                x < ( tx+MAX_SCREEN_TILES_ACROSS+1 ); x++ ) {
-               
-         /* Parallax background layer drawing code */
-         //glsettex( "wood.png" );
-         //drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
-
          if ( world[y][x] == 0 ) {
-            glsettex( "wood.png" );
+            //glsettex( "wood.png" );
             //drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
          } else if ( world[y][x] = 1 ) {
             glsettex( "brick.png" );
-            //drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
+            drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
          }
-         drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
          spx += tilesizx;
-         parax += tilesizx;
       }
       spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2;
-      parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
       spy += tilesizy;
-      paray += tilesizy;
    }
 }
 
