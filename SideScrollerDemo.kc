@@ -65,8 +65,8 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       otime = stime;
       stime = klock();
       drawworld_opt();
-      //drawminimap( 8, 20, 20 );
-      drawminimap_opt( 8, 20, 20 );
+      drawminimap( 8, 20, 20 );
+      //drawminimap_opt( 8, 20, 20 );
       //drawplayer();
       scroll( dtime*256 );
       dtime = stime - otime;
@@ -76,8 +76,8 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
 }
 
 scroll ( movspd ) {
-   moveto( xres - 100, 25 );
-   printf( "movspd: %g", movspd );
+   //moveto( xres - 100, 25 );
+   //printf( "movspd: %g", movspd );
    if ( keystatus[0xcb] ) { // Left arrow-key
       if ( screenx < 0 ) {
          screenx += movspd;
@@ -137,15 +137,27 @@ drawworld () {
 }
 
 drawworld_opt () {
+   /* Keep track of the top-left tile in the viewport with tx & ty */
    tx = int(currtile.x); ty = int(currtile.y);
-   // GL drawing origin starts in middle of sprite
+   
+   /* Foreground layer drawing origins: */
    spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2; 
    spy = screeny + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   
+   /* Parallax layer drawing origins: */
    parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
    paray = screeny + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
    
    /* Parallax drawing code goes here... */
    glsettex( "wood.png" );
+   /*
+    * Note about parallax for-loops:
+    * There still needs to be a formula that dynamically sizes the
+    * parallax layer so that when the viewport reaches the edge of
+    * the foreground layer, the parallax layer does not visibly run
+    * out.
+    *
+    */
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES+1 &&
             y < ( ty+MAX_SCREEN_TILES_ACROSS+3 ); y++ ) {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES+1 &&
@@ -159,6 +171,7 @@ drawworld_opt () {
       paray += tilesizy;
    }
    
+   /* Foreground drawing code goes here... */
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES &&
             y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES &&
@@ -177,6 +190,8 @@ drawworld_opt () {
    }
 }
 
+/* drawdebugmap() still needs to be refactored to implement
+   the optimized drawing algorithm... */
 drawdebugmap () {
    // Rect drawing starts from what would be the top left corner of the rect
    spx = screenx + tilesizx/2;
@@ -203,10 +218,10 @@ drawminimap ( miniscale, xpad, ypad ) {
    
    tx = int(currtile.x); ty = int(currtile.y);
    
-   moveto( xres - 100, 50 );
-   printf( "tx: %g", tx );
-   moveto( xres - 100, 75 );
-   printf( "ty: %g", ty );
+   //moveto( xres - 100, 50 );
+   //printf( "tx: %g", tx );
+   //moveto( xres - 100, 75 );
+   //printf( "ty: %g", ty );
 
    // Rect drawing starts from what would be the top left corner of the rect
    spx = xres - xpad - WORLD_LENGTH_TILES*newtilesizx + newtilesizx/2;
@@ -236,6 +251,8 @@ drawminimap ( miniscale, xpad, ypad ) {
    );
 }
 
+/* drawminimap_opt() essentially shows how the optimized 
+   drawing algorithm works in real time... */
 drawminimap_opt ( miniscale, xpad, ypad ) {
    if ( numframes == 0 ) scale = miniscale;
    newtilesizx = tilesizx/scale;
