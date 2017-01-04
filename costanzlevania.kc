@@ -17,8 +17,10 @@ struct {
    w; 
    h; 
    grounded; } player_t;
+   
+static p_debugcol[3] = { 255,255,255 };
 
-static jump_vel = 250.0;  
+static jump_vel = 450.0;  
 static p_movesp = 200.0;   
 static y_floor;
 
@@ -74,38 +76,37 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       y_floor = yres/2;      
 
       // init the player
-      p.x = xres/2;
-      p.y = (yres/2) - 100;
+      p.x = 15*tilesizx + tilesizx/2;
+      p.y = 15*tilesizy + tilesizy/2;
       p.mapx = floor(p.x/tilesizx);
       p.mapy = floor(p.y/tilesizy);
       p.xvel = 0;
       p.yvel = 0;
-      p.w = 32;
+      p.w = 30;            
       p.h = 48;
       p.grounded = false;
       // init player aabb
       p.aabb.x = p.x;
       p.aabb.y = p.y;
       p.aabb.w = p.w;
-      p.aabb.h = p.h;
-   
+      p.aabb.h = p.h;                   
    }
    
    while ( true ) {
       cls( 0 );
       otime = stime;
       stime = klock();
-      drawworld();
+      //drawworld();
+      // print the dtime
+      moveto( 0,0 );
+      printf( "delta time: %f", dtime );
       drawdebugmap();
+      
       //drawplayer( p.x, p.y, 32, 48 );
-      // Draw a simple rect to be the player for now
-      draw_rect( p.x, p.y, p.w, p.h );
-      // draw the center of the player too.
-      moveto( p.x-1, p.y );
-      lineto( p.x+1, p.y );        
-
       p_move(p, dtime);
       p_update(p, dtime);
+      draw_debugplayer( p );
+      
       scroll( dtime*256 );  
       dtime = stime - otime;    
       refresh();
@@ -138,8 +139,27 @@ scroll ( movspd ) {
 // ======== Drawing Fucntions =======
 
 drawplayer ( x, y, w, h ) {
-   glsettex( "alucardIdle1.png" );
-   drawspr( x, y, 32, 48, 0 );
+   glsettex( "images/alucardIdle1.png" );
+   drawspr( x, y, 16, 32, 0 );
+}
+
+draw_debugplayer ( player_t p ) {
+   // Draw a simple rect to be the player for now
+   setcol( p_debugcol[0], p_debugcol[1], p_debugcol[3] );
+   draw_rect( p.x, p.y, p.w, p.h );
+   // draw the center of the player too.
+   moveto( p.x-1, p.y );
+   lineto( p.x+1, p.y );
+   setcol( 255,255,255 );          
+   
+   // let's draw some debug nums
+   moveto( p.x, p.y-(p.h/2)-10 );
+   printf( "x: %.0f, y: %.0f", p.x, p.y );
+   moveto( p.x, p.y-(p.h/2)-20 );
+   printf( "mapx: %.0f, mapy: %.0f", p.mapx, p.mapy );
+   moveto( p.x, p.y-(p.h/2)-30 );
+   printf( "xvel: %.0f, %.0f", p.xvel, p.yvel ); 
+   moveto( p.x, p.y-(p.h/2)-40 );
 }
 
 drawworld () {
@@ -169,6 +189,9 @@ drawdebugmap () {
       for (x = 0; x < WORLD_LENGTH_TILES; x++ ) {
          if ( world[y][x] == 1 ) {
             draw_rect( spx, spy, tilesizx, tilesizy );
+            setcol( 255,0,255 );
+            setpix( spx, spy );
+            setcol( 255,255,255 );
          }
          spx += tilesizx;   
       }
@@ -213,30 +236,29 @@ draw_rect( x,y,w,h ) {
 
 // update the player velocity and such
 p_update(player_t p, dt) {    
-      // apply gravity
-      p_apply_grav(p, dt);
    
-      // apply movement
-      p_move(p, dt);
+   // apply gravity
+   //p_apply_grav( p, dt );
+   if ( p.grounded == false ) {
+      p.yvel = p.yvel + grav;
+   }
+   // apply movement
+   p_move( p, dt );
    
-      p.x = p.x + p.xvel * dt;
-      p.y = p.y + p.yvel * dt;
+   // check for collisions against the world
+   aabb_collision( p, dt );
+   
+   p.aabb.x += p.xvel * dt;
+   p.aabb.y += p.yvel * dt;
       
-      if ( p.y+p.h/2 >= y_floor ) {
-         p.y = y_floor - p.h/2;  
-      }
-      
-      p.mapx = floor( p.x/tilesizx );
-      p.mapy = floor( p.y/tilesizy );
-      
-      // let's draw some debug nums
-      moveto( p.x, p.y-(p.h/2)-10 );
-      printf( "x: %f, y: %f", p.x, p.y );
-      moveto( p.x, p.y-(p.h/2)-20 );
-      printf( "mapx: %f, mapy: %f", p.mapx, p.mapy );
+   p.x = p.aabb.x;
+   p.y = p.aabb.y;   
+   
+   p.mapx = floor( p.x/tilesizx );
+   p.mapy = floor( p.y/tilesizy );
 }
 
-p_move(player_t p, dt) {
+p_move( player_t p, dt ) {
    // Player movement
    if (keystatus[0xcb] == 1) {
       p.xvel = -1 * p_movesp;
@@ -252,45 +274,76 @@ p_move(player_t p, dt) {
    }                    
             
    if (keystatus[0x39] == 1) { 
-      p_jump(p, dt);
+      //p_jump(p, dt);
+      p.yvel = -1 * jump_vel;   
+   } 
+   
+   if (keystatus[0xd0] == 1) {
+      //p.y += 10;
    } 
 }
 
 // Player movement funcitons
-p_jump(player_t p, dt) {
-   p.yvel = -1 * jump_vel;     
+p_jump( player_t p, dt ) {
+   p.yvel = -1 * jump_vel;
 }
 
-p_apply_grav(player_t p, dt) {
+p_apply_grav( player_t p, dt ) {
    p.yvel = p.yvel + grav;
 } 
-
 
 // Collision Functions =======================
 // This only checks for colllisions against the map
 // using the player.
 // This will be generalized later on to work with any aabb in the game.
 // We also don't need to iterate every cell... 
-aabb_collision ( player_t p_t ) {
+aabb_collision ( player_t p, dt ) {
 
-   // iterate the map
-   for (y=0; y<WORLD_HEIGHT_TILES; y++) {
-      for (x=0; x<WORLD_LENGTH_TILES; x++) {
+   // the current tile of the map
+   rect_t b;
+   b.w = tilesizx;
+   b.h = tilesizy;
+   
+   // player's next position
+   rect_t n;
+   n.x = p.x+p.xvel*dt;
+   n.y = p.y+p.yvel*dt;
+   n.w = p.w;
+   n.h = p.h;
+   
+   // new positions and velocity
+   x; y; xvel; yvel; xdir; ydir;
+     
+   if ( p.xvel != 0 ) {
+      xdir = p.xvel / sqrt(p.xvel*p.xvel);
+      ydir = p.yvel / sqrt(p.yvel*p.yvel);
+   } else {
+      xdir = 0;
+      ydir = 0;
+   }
+   
+   for ( y=0; y<WORLD_HEIGHT_TILES; y++ ) {
+      for ( x=0; x<WORLD_LENGTH_TILES; x++ ) {
+         b.x = (x*tilesizx)+tilesizx/2;
+         b.y = (y*tilesizy)+tilesizy/2;
          
-         // for now 1 is the only solid tile
-         if (world[y][x] == 1) {
-            // check to see if the player will overlap.
-            // Big if check here.
-         }          
-
+         if ( world[y][x] == 1 ) {            
+            if (p.x-p.w/2 < b.x+b.w/2 &&
+               p.x+p.w/2 > b.x-b.w/2) {
+               
+               // Check if the top of the player is less than the bottom
+               // of the block and the player will
+               if ( p.y-p.h/2 > b.y+b.h/2 && p.y-p.h/2+p.yvel*dt > b.y+b.h/2 ) {
+                  p.y = b.y + b.h/2 + p.h/2;
+                  p.yvel = 0;
+               }  
+            }
+            if (p.y-p.h/2 < b.y+b.h/2 &&
+               p.y+p.h/2 > b.y-b.h/2) {
+            }   
+         }    
       }
    }
-
-}
-
-overlapping ( rect_t a, rect_t b ) {
-   return ((a.x < b.x+b.w && a.x+a.w > b.x) &&
-           (a.y < b.y+b.h && a.y+a.h > b.y))
 }
 
 // vector maths ==============================

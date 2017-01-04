@@ -3,7 +3,7 @@
 #define false     0;
 
 struct { x; y; } vec2d_t;
-struct { x; y; w; h; } rect_t;
+struct { x; y; w; h; dx; dy; } rect_t;
 struct { x; y; vert_count; points; } shape_t;
 
 static vec2d_t xaxis_t;
@@ -31,9 +31,13 @@ static rect_t r2;
       r1.y = (yres/2)-100;
       r1.w = 50;
       r1.h = 50;
-      
+      r1.dx = 0;
+      r1.dy = 0;      
+
       r2.w = 50;
       r2.h = 50;
+      r2.dx = 0;
+      r2.dy = 0;
    }
    
    r2.x = mousx;
@@ -175,7 +179,20 @@ getaxes (  ) {
 // Special case of SAT algorithm for
 // AABB's only.
 aabb_collision ( rect_t a, rect_t b, vec2d_t offset ) { 
-
+   if (a.x-a.w/2 < b.x+b.w/2 &&
+      a.x+a.w/2 > b.x-b.w/2 &&
+      a.y-a.h/2 < b.y+b.h/2 &&
+      a.y+a.h/2 > b.y-b.h/2) {
+               
+      // So, we can detect a collision just fine.
+      // but how can I resolve the collision properly?
+      // Ideally we would just move the player out of the rectangle
+      // by the amount of overlap
+                                               
+      //p.xvel = 0;
+      //p.yvel = 0;
+      
+   }
 }
 
 overlapping ( rect_t a, rect_t b ) {
