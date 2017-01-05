@@ -322,25 +322,47 @@ aabb_collision ( player_t p, dt ) {
       ydir = 0;
    }
    
+   // We naively iterate over each tile in the world
+   // if it's solid then we create a struct for it 
+   // and then we check to see if the player is colliding with it
    for ( y=0; y<WORLD_HEIGHT_TILES; y++ ) {
       for ( x=0; x<WORLD_LENGTH_TILES; x++ ) {
          b.x = (x*tilesizx)+tilesizx/2;
          b.y = (y*tilesizy)+tilesizy/2;
          
-         if ( world[y][x] == 1 ) {            
-            if (p.x-p.w/2 < b.x+b.w/2 &&
-               p.x+p.w/2 > b.x-b.w/2) {
-               
-               // Check if the top of the player is less than the bottom
-               // of the block and the player will
-               if ( p.y-p.h/2 > b.y+b.h/2 && p.y-p.h/2+p.yvel*dt > b.y+b.h/2 ) {
+         if ( world[y][x] == 1 ) {     
+            if (p.x+p.w/2 > b.x-b.w/2 && p.x-p.w/2 < b.x+b.w/2) {
+               // top col, may need to project with yvel here
+               if (p.y-p.h/2 > b.y+b.h/2 
+                  && p.y-p.h/2 + p.yvel*dt < b.y + b.h/2) {
+                  // move the player down out of the block
+                  // only affect the y
                   p.y = b.y + b.h/2 + p.h/2;
                   p.yvel = 0;
-               }  
+               }
+               // bottom col
+               if (p.y+p.h/2 < b.y-b.h/2
+                  && p.y+p.h/2 + p.yvel*dt > b.y-b.h/2) {
+                  p.y = b.y - b.h/2 - p.h/2;
+                  p.yvel = 0;
+                  //p.grounded = true;
+               }
             }
-            if (p.y-p.h/2 < b.y+b.h/2 &&
-               p.y+p.h/2 > b.y-b.h/2) {
-            }   
+            if (p.y+p.h/2 > b.y-b.h/2 && p.y-p.h/2 < b.y+b.h/2) {
+               // on the left?
+               if (p.x+p.w/2 < b.x-b.w/2 
+                  && p.x+p.w/2 + p.xvel*dt > b.x-b.w/2) {
+                  // move out to right
+                  p.x = b.x-b.w/2 - p.w/2;
+                  p.xvel = 0;
+               }
+               if (p.x-p.w/2 > b.x+b.w/2
+                  && p.x-p.w/2 + p.xvel*dt < b.x+b.w/2) {
+                  // move out to left
+                  p.x = b.x - b.w/2 - p.w/2;
+                  p.xvel = 0;
+               }
+            }
          }    
       }
    }
