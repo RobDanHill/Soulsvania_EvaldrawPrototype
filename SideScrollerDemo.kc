@@ -61,12 +61,12 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
    }
 
    while ( true ) {
-      cls( 0 );
+      //cls( 0 );
       otime = stime;
       stime = klock();
       drawworld_opt();
-      drawminimap( 8, 20, 20 );
-      //drawminimap_opt( 8, 20, 20 );
+      //drawminimap( 8, 20, 20 );
+      drawminimap_opt( 8, 20, 20 );
       //drawplayer();
       scroll( dtime*256 );
       dtime = stime - otime;
@@ -125,7 +125,7 @@ drawworld () {
       for ( x = 0; x < WORLD_LENGTH_TILES; x++ ) {
          if ( world[y][x] == 0 ) {
             glsettex( "wood.png" );
-         } else if ( world[y][x] = 1 ) {
+         } else if ( world[y][x] == 1 ) {
             glsettex( "brick.png" );
          }
          drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
@@ -150,6 +150,7 @@ drawworld_opt () {
    
    /* Parallax drawing code goes here... */
    glsettex( "wood.png" );
+#if 0
    /*
     * Note about parallax for-loops:
     * There still needs to be a formula that dynamically sizes the
@@ -163,23 +164,33 @@ drawworld_opt () {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES+1 &&
                x < ( tx+MAX_SCREEN_TILES_ACROSS+3 ); x++ ) {
          
-         drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
-
+           drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
          parax += tilesizx;
       }
       parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
       paray += tilesizy;
    }
+#elif 1
+   u = parallax.x*-96/xres;
+   v = parallax.y*-96/yres;
+   glbegin(GL_QUADS); gldisable(GL_DEPTH_TEST);
+   gltexcoord(u,v); glvertex(0,0);
+   gltexcoord(u+MAX_SCREEN_TILES_ACROSS,v); glvertex(xres,0);
+   gltexcoord(u+MAX_SCREEN_TILES_ACROSS,v+MAX_SCREEN_TILES_ACROSS); glvertex(xres,yres);
+   gltexcoord(u,v+MAX_SCREEN_TILES_ACROSS); glvertex(0,yres);
+#endif
    
+#if 0
    /* Foreground drawing code goes here... */
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES &&
             y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES &&
                x < ( tx+MAX_SCREEN_TILES_ACROSS+1 ); x++ ) {
          if ( world[y][x] == 0 ) {
-            //glsettex( "wood.png" );
+            glsettex( "wood.png" );
             //drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
-         } else if ( world[y][x] = 1 ) {
+            drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
+         } else if ( world[y][x] == 1 ) {
             glsettex( "brick.png" );
             drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
          }
@@ -188,6 +199,19 @@ drawworld_opt () {
       spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2;
       spy += tilesizy;
    }
+#else
+   x0 = max(floor(currtile.x),0); x1 = min(ceil(currtile.x+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
+   y0 = max(floor(currtile.y),0); y1 = min(ceil(currtile.y+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
+   for(y=y0;y<y1;y++)
+      for(x=x0;x<x1;x++)
+      {
+         spx = screenx + tilesizx/2 + tilesizx*x;
+         spy = screeny + tilesizy/2 + tilesizy*y;
+              if (world[y][x] == 0) { continue; glsettex("wood.png"); }
+         else if (world[y][x] == 1) { glsettex("brick.png"); }
+         drawspr(spx,spy,tilesizx/2,tilesizy/2,0);
+      }
+#endif   
 }
 
 /* drawdebugmap() still needs to be refactored to implement
