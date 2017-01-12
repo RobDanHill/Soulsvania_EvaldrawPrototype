@@ -171,8 +171,8 @@ drawworld_opt () {
       paray += tilesizy;
    }
 #elif 1
-   u = parallax.x*-96/xres;
-   v = parallax.y*-96/yres;
+   u = parallax.x*-50/xres;
+   v = parallax.y*-50/yres;
    glbegin(GL_QUADS); gldisable(GL_DEPTH_TEST);
    gltexcoord(u,v); glvertex(0,0);
    gltexcoord(u+MAX_SCREEN_TILES_ACROSS,v); glvertex(xres,0);
@@ -289,9 +289,24 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
    moveto( xres - 100, 75 );
    printf( "ty: %g", ty );
    
-   spx = xres - xpad - ( WORLD_LENGTH_TILES - max( 0, tx-1 ) )*newtilesizx + newtilesizx/2;
-   spy = yres - ypad - ( WORLD_HEIGHT_TILES - max( 0, ty-1 ) )*newtilesizy + newtilesizy/2;
+   spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
+   spy = yres - ypad - ( WORLD_HEIGHT_TILES - ty )*newtilesizy + newtilesizy/2;
    
+   x0 = max(floor(currtile.x),0); x1 = min(ceil(currtile.x+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
+   y0 = max(floor(currtile.y),0); y1 = min(ceil(currtile.y+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
+   for(y=y0;y<y1;y++) {
+      for(x=x0;x<x1;x++)
+      {
+         //spx = screenx + tilesizx/2 + tilesizx*x;
+         //spy = screeny + tilesizy/2 + tilesizy*y;
+         if (world[y][x] == 1) { draw_rect(spx,spy,newtilesizx,newtilesizy); }
+         spx += newtilesizx;
+      }
+      spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
+      spy += newtilesizy;
+   }
+   
+#if 0
    for ( y = max( 0, ty-1 ); y < WORLD_HEIGHT_TILES && 
          y < ( ty+MAX_SCREEN_TILES_ACROSS+1 ); y++ ) {
       for ( x = max( 0, tx-1 ); x < WORLD_LENGTH_TILES && 
@@ -305,6 +320,7 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
       spx = xres - xpad - ( WORLD_LENGTH_TILES - max( 0, tx-1 ) )*newtilesizx + newtilesizx/2;
       spy += newtilesizy;
    }
+#endif
    
    if ( numframes == 0 ) {
       minispx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + 
