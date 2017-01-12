@@ -322,6 +322,8 @@ aabb_collision ( player_t p, dt ) {
       ydir = 0;
    }
    
+   collision = false;
+   
    // We naively iterate over each tile in the world
    // if it's solid then we create a struct for it 
    // and then we check to see if the player is colliding with it
@@ -330,7 +332,15 @@ aabb_collision ( player_t p, dt ) {
          b.x = (x*tilesizx)+tilesizx/2;
          b.y = (y*tilesizy)+tilesizy/2;
          
-         if ( world[y][x] == 1 ) {     
+         if ( world[y][x] == 1 ) {
+         
+            if ( aabb_col_simple(p.aabb, b) ) {
+               setcol( 255,0,0 ); 
+               moveto( p.x, p.y );
+               lineto( b.x, b.y);
+               setcol( 255,255,255 );
+            }            
+    
             if (p.x+p.w/2 > b.x-b.w/2 && p.x-p.w/2 < b.x+b.w/2) {
                // top col, may need to project with yvel here
                if (p.y-p.h/2 > b.y+b.h/2 
@@ -355,6 +365,7 @@ aabb_collision ( player_t p, dt ) {
                   // move out to right
                   p.x = b.x-b.w/2 - p.w/2;
                   p.xvel = 0;
+                  
                }
                if (p.x-p.w/2 > b.x+b.w/2
                   && p.x-p.w/2 + p.xvel*dt < b.x+b.w/2) {
@@ -363,9 +374,17 @@ aabb_collision ( player_t p, dt ) {
                   p.xvel = 0;
                }
             }
-         }    
+         }   
       }
    }
+}
+
+// Simple aabb collision
+aabb_col_simple( rect_t a, rect_t b ) {
+
+   return ((a.x-a.w/2 < b.x+b.w/2 && a.x+a.w/2 > b.x-b.w/2) &&
+           (a.y-a.h/2 < b.y+b.h/2 && a.y+a.h/2 > b.y-b.h/2))
+
 }
 
 // vector maths ==============================
