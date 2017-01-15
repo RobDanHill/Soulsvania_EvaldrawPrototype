@@ -39,12 +39,11 @@ struct { x; y; } vec2d_t;
 static stime, otime, dtime;
 static player_t p;
 
-static screenx, screeny, minispx, minispy, 
-       scale, screenxres, screenyres, tilesizx, tilesizy;
+static minispx, minispy, scale, screenxres, screenyres, tilesizx, tilesizy;
        
 // Use this to determine the top-left corner that the viewport
 // begins drawing at...
-static vec2d_t currtile, parallax;
+static vec2d_t mapcursor, viewport, currtile, parallax;
 
 static NUM_BLOCKS;
 static tile_t blocks[WORLD_HEIGHT_TILES*WORLD_LENGTH_TILES];
@@ -82,28 +81,30 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
    glenable( GL_ALPHA_TEST );
 
    if ( numframes == 0 ) {
-      screenxres = xres; screenyres = yres;
-      screenx = 0; screeny = 0;
-      currtile.x = 0; currtile.y = 0;
-      parallax.x = 0; parallax.y = 0;
-      tilesizx = screenxres/MAX_SCREEN_TILES_ACROSS;
-      tilesizy = screenyres/MAX_SCREEN_TILES_ACROSS;
+      screenxres  = xres; screenyres  = yres;
+      mapcursor.x =    0; mapcursor.y =    0;
+      viewport.x  =    0; viewport.y  =    0;
+      currtile.x  =    0; currtile.y  =    0;
+      parallax.x  =    0; parallax.y  =    0;
+      tilesizx    = screenxres/MAX_SCREEN_TILES_ACROSS;
+      tilesizy    = screenyres/MAX_SCREEN_TILES_ACROSS;
 
       // init the player
-      p.x =  128;
-      p.y = 128;
-      p.mapx = floor( p.x/tilesizx );
-      p.mapy = floor( p.y/tilesizy );
-      p.xvel = 0;
-      p.yvel = 0;
-      p.w = tilesizx;            
-      p.h = tilesizy*2;
+      p.x        = screenxres/2;
+      p.y        = screenyres/2;
+      p.mapx     = int( p.x/tilesizx );
+      p.mapy     = int( p.y/tilesizy );
+      p.xvel     = 0;
+      p.yvel     = 0;
+      p.w        = tilesizx;            
+      p.h        = tilesizy*2;
       p.grounded = false;
+      
       // init player aabb
-      p.aabb.x = p.x;
-      p.aabb.y = p.y;
-      p.aabb.w = p.w/2;
-      p.aabb.h = p.h;
+      p.aabb.x   = p.x;
+      p.aabb.y   = p.y;
+      p.aabb.w   = p.w/2;
+      p.aabb.h   = p.h;
       
       // initialize the blocks array
       init_blocks();
@@ -120,11 +121,11 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       //drawplayer();
 
       drawplayer( p.x, p.y, p.w, p.h );
-      p_move( p, dtime );
+      //p_move( p, dtime );
       p_update( p, dtime );
       draw_debugplayer( p );
 
-      scroll( dtime*256 );
+      //scroll( dtime*256 );
       dtime = stime - otime;
       refresh();
    }
@@ -139,8 +140,8 @@ init_blocks() {
          if ( WORLD[y][x] == 1 ) {
             // put it into blocks
             tile_t b;
-            b.x = screenx+(x*tilesizx)+tilesizx/2;
-            b.y = screeny+(y*tilesizy)+tilesizy/2;
+            b.x = viewport.x+(x*tilesizx)+tilesizx/2;
+            b.y = viewport.y+(y*tilesizy)+tilesizy/2;
             b.w = tilesizx;
             b.h = tilesizy;
             blocks[i] = b;
@@ -154,37 +155,38 @@ init_blocks() {
 scroll ( movspd ) {
    //moveto( xres - 100, 25 );
    //printf( "movspd: %g", movspd );
-   if ( keystatus[0xcb] ) { // Left arrow-key
-      if ( screenx < 0 ) {
-         screenx += movspd;
-         parallax.x += movspd/scale;
-         currtile.x -= movspd/tilesizx;
-         minispx -= movspd/scale;
-      }
-   } 
-   if ( keystatus[0xcd] ) { // Right arrow-key
-      if ( screenx > screenxres - tilesizx*WORLD_LENGTH_TILES ) {
-         screenx -= movspd;
-         parallax.x -= movspd/scale;
-         currtile.x += movspd/tilesizx;
-         minispx += movspd/scale;
-      }
-   } 
-   if ( keystatus[0xc8] ) {
-      if ( screeny < 0 ) {
-         screeny += movspd;
-         parallax.y += movspd/scale;
-         currtile.y -= movspd/tilesizy;
-         minispy -= movspd/scale;
-      }
-   } 
-   if ( keystatus[0xd0] ) {
-      if ( screeny > screenyres - tilesizy*WORLD_HEIGHT_TILES ) {
-         screeny -= movspd;
-         parallax.y -= movspd/scale;
-         currtile.y += movspd/tilesizy;
-         minispy += movspd/scale;
-      }
+   
+   viewport.x = p.x - screenxres/2;
+   viewport.y = p.y - screenyres/2;
+
+   if ( viewport.x < 0 ) {
+      /*
+      viewport.x += movspd;
+      parallax.x += movspd/scale;
+      currtile.x -= movspd/tilesizx;
+      minispx -= movspd/scale;
+      */
+   } else if ( viewport.x > screenxres - tilesizx*WORLD_LENGTH_TILES ) {
+      /*
+      viewport.x -= movspd;
+      parallax.x -= movspd/scale;
+      currtile.x += movspd/tilesizx;
+      minispx += movspd/scale;
+      */
+   } else if ( viewport.y < 0 ) {
+      /*
+      viewport.y += movspd;
+      parallax.y += movspd/scale;
+      currtile.y -= movspd/tilesizy;
+      minispy -= movspd/scale;
+      */
+   } else if ( viewport.y > screenyres - tilesizy*WORLD_HEIGHT_TILES ) {
+      /*
+      viewport.y -= movspd;
+      parallax.y -= movspd/scale;
+      currtile.y += movspd/tilesizy;
+      minispy += movspd/scale;
+      */
    }
 }
 
@@ -196,7 +198,7 @@ drawplayer () {
 drawworld () {
    glsettex( "wood.png" );
    // GL drawing origin starts in middle of sprite
-   spx = screenx + tilesizx/2; spy = screeny + tilesizy/2;
+   spx = viewport.x + tilesizx/2; spy = viewport.y + tilesizy/2;
    for ( y = 0; y < WORLD_HEIGHT_TILES; y++ ) {
       for ( x = 0; x < WORLD_LENGTH_TILES; x++ ) {
          if ( world[y][x] == 0 ) {
@@ -207,7 +209,7 @@ drawworld () {
          drawspr( spx, spy, tilesizx/2, tilesizy/2, 0 );
          spx += tilesizx;
       }
-      spx = screenx + tilesizx/2;
+      spx = viewport.x + tilesizx/2;
       spy += tilesizy;
    }
 }
@@ -217,12 +219,12 @@ drawworld_opt () {
    tx = int(currtile.x); ty = int(currtile.y);
    
    /* Foreground layer drawing origins: */
-   spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2; 
-   spy = screeny + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   spx = viewport.x + max( 0, tx-1 )*tilesizx + tilesizx/2; 
+   spy = viewport.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
    
    /* Parallax layer drawing origins: */
-   parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
-   paray = screeny + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   parax = viewport.x + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
+   paray = viewport.y + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
    
    /* Parallax drawing code goes here... */
    glsettex( "wood.png" );
@@ -243,7 +245,7 @@ drawworld_opt () {
            drawspr( parax, paray, tilesizx/2, tilesizy/2, 0 );
          parax += tilesizx;
       }
-      parax = screenx + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
+      parax = viewport.x + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
       paray += tilesizy;
    }
 #elif 1
@@ -272,7 +274,7 @@ drawworld_opt () {
          }
          spx += tilesizx;
       }
-      spx = screenx + max( 0, tx-1 )*tilesizx + tilesizx/2;
+      spx = viewport.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
       spy += tilesizy;
    }
 #else
@@ -281,8 +283,8 @@ drawworld_opt () {
    for(y=y0;y<y1;y++)
       for(x=x0;x<x1;x++)
       {
-         spx = screenx + tilesizx/2 + tilesizx*x;
-         spy = screeny + tilesizy/2 + tilesizy*y;
+         spx = viewport.x + tilesizx/2 + tilesizx*x;
+         spy = viewport.y + tilesizy/2 + tilesizy*y;
               if (world[y][x] == 0) { continue; glsettex("wood.png"); }
          else if (world[y][x] == 1) { glsettex("brick.png"); }
          drawspr(spx,spy,tilesizx/2,tilesizy/2,0);
@@ -294,8 +296,8 @@ drawworld_opt () {
    the optimized drawing algorithm... */
 drawdebugmap () {
    // Rect drawing starts from what would be the top left corner of the rect
-   spx = screenx + tilesizx/2;
-   spy = screeny + tilesizy/2;
+   spx = viewport.x + tilesizx/2;
+   spy = viewport.y + tilesizy/2;
    for ( y = 0; y < WORLD_HEIGHT_TILES; y++ ) {
       for ( x = 0; x < WORLD_LENGTH_TILES; x++ ) {
          if ( world[y][x] == 1 ) {
@@ -304,7 +306,7 @@ drawdebugmap () {
          spx += tilesizx;   
       }
       // reset the x pos
-      spx = screenx + tilesizx/2;
+      spx = viewport.x + tilesizx/2;
       spy += tilesizy;
    }
 }
@@ -443,8 +445,8 @@ p_update(player_t p, dt) {
    p.x = p.aabb.x;
    p.y = p.aabb.y;   
    
-   p.mapx = floor( p.x/tilesizx );
-   p.mapy = floor( p.y/tilesizy );
+   p.mapx = int( p.x/tilesizx );
+   p.mapy = int( p.y/tilesizy );
 }
 
 p_move( player_t p, dt ) {
@@ -469,7 +471,9 @@ p_move( player_t p, dt ) {
    
    if (keystatus[0xd0] == 1) {
       //p.y += 10;
-   } 
+   }
+   
+   scroll( dt*256 );
 }
 
 // Player movement funcitons
@@ -547,8 +551,8 @@ aabb_collision ( player_t p, dt ) {
    // and then we check to see if the player is colliding with it
    for ( y=0; y<WORLD_HEIGHT_TILES; y++ ) {
       for ( x=0; x<WORLD_LENGTH_TILES; x++ ) {
-         b.x = screenx+(x*tilesizx)+tilesizx/2;
-         b.y = screeny+(y*tilesizy)+tilesizy/2;
+         b.x = viewport.x+(x*tilesizx)+tilesizx/2;
+         b.y = viewport.y+(y*tilesizy)+tilesizy/2;
          
          if ( world[y][x] == 1 ) {
          
