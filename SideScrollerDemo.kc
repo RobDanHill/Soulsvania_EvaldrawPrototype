@@ -160,29 +160,36 @@ scroll ( movspd ) {
    viewport.y = p.y - screenyres/2;
 
    if ( viewport.x < 0 ) {
+      viewport.x = 0;
       /*
-      viewport.x += movspd;
+      mapcursor.x += movspd;
       parallax.x += movspd/scale;
       currtile.x -= movspd/tilesizx;
       minispx -= movspd/scale;
       */
-   } else if ( viewport.x > screenxres - tilesizx*WORLD_LENGTH_TILES ) {
+   }
+   if ( viewport.x > tilesizx*WORLD_LENGTH_TILES - screenxres ) {
+      viewport.x = tilesizx*WORLD_LENGTH_TILES - screenxres;
       /*
-      viewport.x -= movspd;
+      mapcursor.x -= movspd;
       parallax.x -= movspd/scale;
       currtile.x += movspd/tilesizx;
       minispx += movspd/scale;
       */
-   } else if ( viewport.y < 0 ) {
+   }
+   if ( viewport.y < 0 ) {
+      viewport.y = 0;
       /*
-      viewport.y += movspd;
+      mapcursor.y += movspd;
       parallax.y += movspd/scale;
       currtile.y -= movspd/tilesizy;
       minispy -= movspd/scale;
       */
-   } else if ( viewport.y > screenyres - tilesizy*WORLD_HEIGHT_TILES ) {
+   }
+   if ( viewport.y > tilesizy*WORLD_HEIGHT_TILES - screenyres ) {
+      viewport.y = tilesizy*WORLD_HEIGHT_TILES - screenyres;
       /*
-      viewport.y -= movspd;
+      mapcursor.y -= movspd;
       parallax.y -= movspd/scale;
       currtile.y += movspd/tilesizy;
       minispy += movspd/scale;
@@ -216,15 +223,15 @@ drawworld () {
 
 drawworld_opt () {
    /* Keep track of the top-left tile in the viewport with tx & ty */
-   tx = int(currtile.x); ty = int(currtile.y);
+   tx = p.mapx - MAX_SCREEN_TILES_ACROSS/2; ty = p.mapy - MAX_SCREEN_TILES_ACROSS/2;
    
    /* Foreground layer drawing origins: */
-   spx = viewport.x + max( 0, tx-1 )*tilesizx + tilesizx/2; 
-   spy = viewport.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   spx = mapcursor.x + max( 0, tx-1 )*tilesizx + tilesizx/2; 
+   spy = mapcursor.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
    
    /* Parallax layer drawing origins: */
-   parax = viewport.x + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
-   paray = viewport.y + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
+   parax = mapcursor.x + parallax.x + max( 0, tx-1 )*tilesizx + tilesizx/2;
+   paray = mapcursor.y + parallax.y + max( 0, ty-1 )*tilesizy + tilesizy/2;
    
    /* Parallax drawing code goes here... */
    glsettex( "wood.png" );
@@ -278,8 +285,8 @@ drawworld_opt () {
       spy += tilesizy;
    }
 #else
-   x0 = max(floor(currtile.x),0); x1 = min(ceil(currtile.x+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
-   y0 = max(floor(currtile.y),0); y1 = min(ceil(currtile.y+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
+   x0 = max(tx,0); x1 = min(ceil(tx+MAX_SCREEN_TILES_ACROSS),WORLD_LENGTH_TILES);
+   y0 = max(ty,0); y1 = min(ceil(ty+MAX_SCREEN_TILES_ACROSS),WORLD_HEIGHT_TILES);
    for(y=y0;y<y1;y++)
       for(x=x0;x<x1;x++)
       {
@@ -296,8 +303,8 @@ drawworld_opt () {
    the optimized drawing algorithm... */
 drawdebugmap () {
    // Rect drawing starts from what would be the top left corner of the rect
-   spx = viewport.x + tilesizx/2;
-   spy = viewport.y + tilesizy/2;
+   spx = mapcursor.x + tilesizx/2;
+   spy = mapcursor.y + tilesizy/2;
    for ( y = 0; y < WORLD_HEIGHT_TILES; y++ ) {
       for ( x = 0; x < WORLD_LENGTH_TILES; x++ ) {
          if ( world[y][x] == 1 ) {
@@ -306,7 +313,7 @@ drawdebugmap () {
          spx += tilesizx;   
       }
       // reset the x pos
-      spx = viewport.x + tilesizx/2;
+      spx = mapcursor.x + tilesizx/2;
       spy += tilesizy;
    }
 }
