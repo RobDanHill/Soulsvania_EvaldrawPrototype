@@ -68,7 +68,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       tilesizx = screenxres/MAX_SCREEN_TILES_ACROSS;
       tilesizy = screenyres/MAX_SCREEN_TILES_ACROSS;
       scale = 8;
-      p.tile.x = 5; p.tile.y = 7;
+      p.tile.x = 20; p.tile.y = 10;
       p.map.x = p.tile.x*tilesizx+tilesizx/2;
       p.map.y = p.tile.y*tilesizy+tilesizy/2;
    }
@@ -185,6 +185,10 @@ drawworld_opt () {
    tx = p.tile.x - MAX_SCREEN_TILES_ACROSS/2; ty = p.tile.y - MAX_SCREEN_TILES_ACROSS/2;
    x0 = max( floor( tx ), 0 ); x1 = min( ceil( tx + MAX_SCREEN_TILES_ACROSS ), WORLD_LENGTH_TILES );
    y0 = max( floor( ty ), 0 ); y1 = min( ceil( ty + MAX_SCREEN_TILES_ACROSS ), WORLD_HEIGHT_TILES );
+   if ( p.tile.x < MAX_SCREEN_TILES_ACROSS/2 ) x1 = x0 + ( MAX_SCREEN_TILES_ACROSS - x0 );
+   if ( p.tile.y < MAX_SCREEN_TILES_ACROSS/2 ) y1 = y0 + ( MAX_SCREEN_TILES_ACROSS - y0 );
+   if ( p.tile.x > WORLD_LENGTH_TILES - MAX_SCREEN_TILES_ACROSS/2 ) x0 = WORLD_LENGTH_TILES - MAX_SCREEN_TILES_ACROSS;
+   if ( p.tile.y > WORLD_HEIGHT_TILES - MAX_SCREEN_TILES_ACROSS/2 ) y0 = WORLD_HEIGHT_TILES - MAX_SCREEN_TILES_ACROSS;
    for( y = y0; y < y1; y++ ) {
       for( x = x0; x < x1; x++ ) {
          spx = screenx + tilesizx/2 + tilesizx*x;
