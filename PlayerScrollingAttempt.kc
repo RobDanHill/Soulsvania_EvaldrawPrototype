@@ -70,7 +70,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       scale = 8;
       p.tile.x = 20; p.tile.y = 10;
       p.map.x = p.tile.x*tilesizx+tilesizx/2;
-      p.map.y = p.tile.y*tilesizy+tilesizy/2;
+      p.map.y = p.tile.y*tilesizy;
    }
 
    while ( true ) {
@@ -162,11 +162,19 @@ scroll ( movspd ) {
 }
 
 drawplayer () {
+   glsettex( "/Daniel/Soulsvania/Images/alucardIdle1.png" );
    draw_rect( 
       p.screen.x,
       p.screen.y, 
       tilesizx, 
-      tilesizy 
+      tilesizy*2 
+   );
+   drawspr(
+      p.screen.x,
+      p.screen.y,
+      tilesizx/2,
+      tilesizy,
+      0
    );
 }
 
