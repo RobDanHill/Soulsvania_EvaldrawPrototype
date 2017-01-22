@@ -67,6 +67,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       parallax.x = 0; parallax.y = 0;
       tilesizx = screenxres/MAX_SCREEN_TILES_ACROSS;
       tilesizy = screenyres/MAX_SCREEN_TILES_ACROSS;
+      scale = 8;
       p.tile.x = 5; p.tile.y = 7;
       p.map.x = p.tile.x*tilesizx+tilesizx/2;
       p.map.y = p.tile.y*tilesizy+tilesizy/2;
@@ -93,21 +94,25 @@ moveplayer( dx, dy ) {
    if ( keystatus[0xcb] ) { // Left arrow-key
       if ( p.map.x > 0 ) {
          p.map.x -= dx;
+         if ( p.screen.x == screenxres/2 ) parallax.x += dx/scale;
       }
    } 
    if ( keystatus[0xcd] ) { // Right arrow-key
       if ( p.map.x < tilesizx*WORLD_LENGTH_TILES ) {
          p.map.x += dx;
+         if ( p.screen.x == screenxres/2 ) parallax.x -= dx/scale;
       }
    } 
    if ( keystatus[0xc8] ) {
       if ( p.map.y > 0 ) { 
          p.map.y -= dy;
+         if ( p.screen.y == screenyres/2 ) parallax.y += dy/scale;
       }
    } 
    if ( keystatus[0xd0] ) {
       if ( p.map.y < tilesizy*WORLD_HEIGHT_TILES ) {
          p.map.y += dy;
+         if ( p.screen.y == screenyres/2 ) parallax.y -= dy/scale;
       }
    }
    /* Update player tile here */
@@ -115,13 +120,13 @@ moveplayer( dx, dy ) {
    p.tile.y = p.map.y/tilesizy;
    
    /* Update screen coordinates here */
-   //if ( p.tile.x > MAX_SCREEN_TILES_ACROSS/2 ) p.screen.x = screenxres/2;
-   //else if ( p.tile.x
-   p.screen.x = min( p.map.x, max( screenxres/2, p.map.x - tilesizx*WORLD_LENGTH_TILES/2 ) );
-   p.screen.y = min( p.map.y, max( screenyres/2, p.map.y - tilesizy*WORLD_HEIGHT_TILES/2 ) );
+   outrimx = tilesizx*WORLD_LENGTH_TILES - tilesizx*MAX_SCREEN_TILES_ACROSS;
+   outrimy = tilesizy*WORLD_HEIGHT_TILES - tilesizy*MAX_SCREEN_TILES_ACROSS;
+   p.screen.x = min( p.map.x, max( screenxres/2, p.map.x - outrimx ) );
+   p.screen.y = min( p.map.y, max( screenyres/2, p.map.y - outrimy ) );
    
    moveto( screenxres - 150, 25 );
-   printf( "px: %g, py: %g", p.tile.x, p.tile.y );
+   printf( "px: %g, py: %g", int( p.tile.x ), int( p.tile.y ) );
    
    screenx = -max( 0, min( screenx, tilesizx*WORLD_LENGTH_TILES - screenxres ) );
    screeny = -max( 0, min( screeny, tilesizy*WORLD_HEIGHT_TILES - screenyres ) );
@@ -274,13 +279,10 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
    for(y=y0;y<y1;y++) {
       for(x=x0;x<x1;x++)
       {
-         //spx = screenx + tilesizx/2 + tilesizx*x;
-         //spy = screeny + tilesizy/2 + tilesizy*y;
+         spx = xres - xpad - screenx/scale + newtilesizx/2 + newtilesizx*x;
+         spy = yres - ypad - screeny/scale + newtilesizy/2 + newtilesizy*y;
          if (world[y][x] == 1) { draw_rect(spx,spy,newtilesizx,newtilesizy); }
-         spx += newtilesizx;
       }
-      spx = xres - xpad - ( WORLD_LENGTH_TILES - tx )*newtilesizx + newtilesizx/2;
-      spy += newtilesizy;
    }
    
 #if 0
