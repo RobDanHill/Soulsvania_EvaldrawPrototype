@@ -1,6 +1,32 @@
 #define true                     1
 #define false                    0
 
+// Player ==================================
+static grav = 10.0;
+          
+// tiles
+struct { x; y; w; h; } tile_t;
+// Rect, rather an aabb
+struct { x; y; w; h; } rect_t;
+// the player
+struct { 
+   x; 
+   y;
+   mapx;
+   mapy;
+   rect_t aabb; 
+   xvel; 
+   yvel; 
+   w; 
+   h; 
+   grounded; } player_t;
+   
+static p_debugcol[3] = { 255,255,255 };
+
+static jump_vel = 450.0;  
+static p_movesp = 200.0;   
+static y_floor;
+
 // Change this value to manipulate how many tiles
 // take up the screen width and height
 #define MAX_SCREEN_TILES_ACROSS 12
@@ -11,6 +37,7 @@
 struct { x; y; } vec2d_t;
 
 static stime, otime, dtime;
+static player_t p;
 
 static screenx, screeny, minispx, minispy, 
        scale, screenxres, screenyres, tilesizx, tilesizy;
@@ -19,6 +46,9 @@ static screenx, screeny, minispx, minispy,
 // begins drawing at...
 static vec2d_t currtile, parallax;
 
+static NUM_BLOCKS;
+static tile_t blocks[WORLD_HEIGHT_TILES*WORLD_LENGTH_TILES];
+
 // 24x24 map; This will be used to test horizontal and vertical scrolling...
 static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -26,11 +56,11 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-   1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-   1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+   1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
    1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -58,6 +88,26 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       parallax.x = 0; parallax.y = 0;
       tilesizx = screenxres/MAX_SCREEN_TILES_ACROSS;
       tilesizy = screenyres/MAX_SCREEN_TILES_ACROSS;
+
+      // init the player
+      p.x =  128;
+      p.y = 128;
+      p.mapx = floor( p.x/tilesizx );
+      p.mapy = floor( p.y/tilesizy );
+      p.xvel = 0;
+      p.yvel = 0;
+      p.w = tilesizx;            
+      p.h = tilesizy*2;
+      p.grounded = false;
+      // init player aabb
+      p.aabb.x = p.x;
+      p.aabb.y = p.y;
+      p.aabb.w = p.w/2;
+      p.aabb.h = p.h;
+      
+      // initialize the blocks array
+      init_blocks();
+      
    }
 
    while ( true ) {
@@ -68,11 +118,37 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       //drawminimap( 8, 20, 20 );
       drawminimap_opt( 8, 20, 20 );
       //drawplayer();
+
+      drawplayer( p.x, p.y, p.w, p.h );
+      p_move( p, dtime );
+      p_update( p, dtime );
+      draw_debugplayer( p );
+
       scroll( dtime*256 );
       dtime = stime - otime;
       refresh();
    }
 
+}
+
+// Initialize the array of blocks
+init_blocks() {
+   i = 0;
+   for ( y=0; y<WORLD_HEIGHT_TILES; y++ ) {
+      for ( x=0; x<WORLD_LENGTH_TILES; x++ ) {
+         if ( WORLD[y][x] == 1 ) {
+            // put it into blocks
+            tile_t b;
+            b.x = screenx+(x*tilesizx)+tilesizx/2;
+            b.y = screeny+(y*tilesizy)+tilesizy/2;
+            b.w = tilesizx;
+            b.h = tilesizy;
+            blocks[i] = b;
+            i++;
+         }
+      }
+   }
+   NUM_BLOCKS = i;
 }
 
 scroll ( movspd ) {
@@ -337,6 +413,220 @@ drawminimap_opt ( miniscale, xpad, ypad ) {
       MAX_SCREEN_TILES_ACROSS*newtilesizy 
    );
 }
+
+// Player =======================================
+drawplayer ( x, y, w, h ) {
+   glsettex( "images/alucardIdle1.png" );
+   drawspr( x, y, w/2, h/2, 0 );
+}
+
+draw_debugplayer ( player_t p ) {
+   // Draw a simple rect to be the player for now
+   setcol( p_debugcol[0], p_debugcol[1], p_debugcol[3] );
+   draw_rect( p.x, p.y, p.aabb.w, p.aabb.h );
+   // draw the center of the player too.
+   moveto( p.x-1, p.y );
+   lineto( p.x+1, p.y );
+   setcol( 255,255,255 );          
+   
+   // let's draw some debug nums
+   moveto( p.x, p.y-(p.h/2)-10 );
+   printf( "x: %.0f, y: %.0f", p.x, p.y );
+   moveto( p.x, p.y-(p.h/2)-20 );
+   printf( "mapx: %.0f, mapy: %.0f", p.mapx, p.mapy );
+   moveto( p.x, p.y-(p.h/2)-30 );
+   printf( "xvel: %.0f, %.0f", p.xvel, p.yvel ); 
+   moveto( p.x, p.y-(p.h/2)-40 );
+}
+
+// update the player velocity and such
+p_update(player_t p, dt) {    
+   
+   // apply gravity
+   //p_apply_grav( p, dt );
+   if ( p.grounded == false ) {
+      p.yvel = p.yvel + grav;
+   }
+   // apply movement
+   p_move( p, dt );
+   
+   // check for collisions against the world
+   aabb_collision( p, dt );
+   
+   p.aabb.x += p.xvel * dt;
+   p.aabb.y += p.yvel * dt;
+      
+   p.x = p.aabb.x;
+   p.y = p.aabb.y;   
+   
+   p.mapx = floor( p.x/tilesizx );
+   p.mapy = floor( p.y/tilesizy );
+}
+
+p_move( player_t p, dt ) {
+   // Player movement
+   if (keystatus[0xcb] == 1) {
+      p.xvel = -1 * p_movesp;
+   }
+     
+   if (keystatus[0xcd] == 1) {
+      p.xvel = p_movesp;
+   }
+   
+   if (keystatus[0xcb] == 0
+      && keystatus[0xcd] == 0) {
+      p.xvel = 0;
+   }                    
+            
+   if (keystatus[0x39] == 1) { 
+      //p_jump(p, dt);
+      p.yvel = -1 * jump_vel;   
+   } 
+   
+   if (keystatus[0xd0] == 1) {
+      //p.y += 10;
+   } 
+}
+
+// Player movement funcitons
+p_jump( player_t p, dt ) {
+   p.yvel = -1 * jump_vel;
+}
+
+p_apply_grav( player_t p, dt ) {
+   p.yvel = p.yvel + grav;
+} 
+// ==============================================
+
+// Collision ====================================
+// more efficient collsion
+
+#if 1
+aabb_collision ( player_t p, dt ) {
+   // grab some player info
+   rect_t a = p.aabb;
+   dx = p.xvel*dt; dy = p.yvel*dt;
+   pw = a.w; ph = a.h;
+      
+   // use the blocks array to check for collisions
+   for ( i=0; i<NUM_BLOCKS; i++ ) {
+      tile_t b = blocks[i];
+      if ( a.x+pw/2 > b.x-b.w/2 && a.x-pw/2 < b.x+b.w/2 ) {
+         // check for and resolve y cols
+         // collision with top side of player
+         if ( a.y-ph/2 > b.y+b.h/2 && a.y-ph/2 + dy < b.y+b.h/2 ) {
+            // move the player flush against the bottom of b
+            // not quite flush...
+            a.y = (b.y + b.h/2) + ph/2;
+            p.yvel = 0;  
+         }
+         // collision with bottom side of player
+         if ( a.y+ph/2 < b.y-b.h/2 && a.y+ph/2 + dy > b.y-b.h/2 ) {
+            // move the player flush against the top of b
+            a.y = b.y - b.h/2 - ph/2;
+            p.yvel = 0;
+         }
+      }
+      if ( a.y+ph/2 > b.y-b.h/2 && a.y-ph/2 < b.y+b.h/2 ) {
+         // check for and resolve x cols
+         // collsion with left side of player
+         if ( a.x-pw/2 > b.x+b.w/2 && a.x-pw/2 + dx < b.x+b.w/2 ) {
+            // set the player flush against the right side of b
+            a.x = b.x + b.w/2 + pw/2;
+            p.xvel = 0;
+         }
+         // collision with the right side of the player
+         if ( a.x+pw/2 < b.x-b.w/2 && a.x+pw/2 + dx > b.x-b.w/2 ) {
+            // set the player flush against the left side of b
+            a.x = b.x - b.w/2 - pw/2;
+            p.xvel = 0;
+         }
+      }  
+   }
+}
+
+#else
+aabb_collision ( player_t p, dt ) {
+
+   // the current tile of the map
+   rect_t b;
+   b.w = tilesizx;
+   b.h = tilesizy;
+   
+   // new positions and velocity
+   //x; y; xvel; yvel; xdir; ydir;
+   
+   grounded = false;
+   
+   // We naively iterate over each tile in the world
+   // if it's solid then we create a struct for it 
+   // and then we check to see if the player is colliding with it
+   for ( y=0; y<WORLD_HEIGHT_TILES; y++ ) {
+      for ( x=0; x<WORLD_LENGTH_TILES; x++ ) {
+         b.x = screenx+(x*tilesizx)+tilesizx/2;
+         b.y = screeny+(y*tilesizy)+tilesizy/2;
+         
+         if ( world[y][x] == 1 ) {
+         
+            if ( aabb_col_simple(p.aabb, b) ) {
+               setcol( 255,0,0 ); 
+               moveto( p.x, p.y );
+               lineto( b.x, b.y );
+               setcol( 255,255,255 );
+            }            
+    
+            if (p.x+p.aabb.w/2 > b.x-b.w/2 && p.x-p.aabb.w/2 < b.x+b.w/2) {
+               // top col, may need to project with yvel here
+               if (p.y-p.aabb.h/2 > b.y+b.h/2 
+                  && p.y-p.aabb.h/2 + p.yvel*dt < b.y + b.h/2) {
+                  // move the player down out of the block
+                  // only affect the y
+                  p.y = b.y + b.h/2 + p.aabb.h/2;
+                  p.yvel = 0;
+               }
+               // bottom col
+               if (p.y+p.aabb.h/2 < b.y-b.h/2
+                  && p.y+p.aabb.h/2 + p.yvel*dt > b.y-b.h/2) {
+                  p.y = b.y - b.h/2 - p.aabb.h/2;
+                  p.yvel = 0;
+                  //p.grounded = true;
+               }
+            }
+            if (p.y+p.aabb.h/2 > b.y-b.h/2 && p.y-p.aabb.h/2 < b.y+b.h/2) {
+               // on the left?
+               // Something isn't right, here. 
+               if (p.x+p.aabb.w/2 < b.x-b.w/2 
+                  && p.x+p.aabb.w/2 + p.xvel*dt > b.x-b.w/2
+                  || (p.xvel > 1 && p.x+p.aabb.w/2 == b.x-b.w/2)) {
+                  // move out to right
+                  p.x = b.x + b.w/2 + p.aabb.w/2;
+                  p.xvel = 0;
+                  
+               }
+               // Something is also wrong here. 
+               // not sure what though.
+               if (p.x-p.w/2 > b.x+b.w/2
+                  && p.x-p.w/2 + p.xvel*dt < b.x+b.w/2
+                  || (p.xvel < 0 && p.x-p.aabb.w/2 == b.x+b.w/2)) {
+                  // move out to left
+                  p.x = b.x - b.w/2 - p.aabb.w/2;
+                  p.xvel = 0;
+               }
+            }
+         }   
+      }
+   }
+}
+#endif
+
+// Simple aabb collision
+aabb_col_simple( rect_t a, rect_t b ) {
+
+   return ((a.x-a.w/2 < b.x+b.w/2 && a.x+a.w/2 > b.x-b.w/2) &&
+           (a.y-a.h/2 < b.y+b.h/2 && a.y+a.h/2 > b.y-b.h/2))
+
+}
+// ==============================================
 
 // modify this to treat x,y as the center
 draw_rect( x, y, w, h ) {

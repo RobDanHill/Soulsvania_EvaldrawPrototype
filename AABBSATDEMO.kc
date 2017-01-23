@@ -1,0 +1,230 @@
+#define MAX_VERTS 8;
+#define true      1;
+#define false     0;
+
+struct { x; y; } vec2d_t;
+struct { x; y; w; h; dx; dy; } rect_t;
+struct { x; y; vert_count; points; } shape_t;
+
+static vec2d_t xaxis_t;
+static vec2d_t yaxis_t;
+static vec2d_t u_t;
+static vec2d_t v_t;
+static vec2d_t w_t;
+static vec2d_t z_t;
+
+// stationary rectangle
+static rect_t r1;
+// rectangle around the mouse
+static rect_t r2;
+
+() {
+   cls(0,0,0);
+
+   if (numframes == 0) {
+      xaxis_t.x = 1;
+      xaxis_t.y = 0;
+      yaxis_t.x = 0;
+      yaxis_t.y = 1;
+      
+      r1.x = 100+xres/2;
+      r1.y = (yres/2)-100;
+      r1.w = 50;
+      r1.h = 50;
+      r1.dx = 0;
+      r1.dy = 0;      
+
+      r2.w = 50;
+      r2.h = 50;
+      r2.dx = 0;
+      r2.dy = 0;
+   }
+   
+   r2.x = mousx;
+   r2.y = mousy; 
+
+   u_t.x = mousx;
+   u_t.y = mousy;   
+
+   setcol( 255,255,255 );   
+
+   // Draw line from center to mouse
+   moveto( xres/2, yres/2 );
+   lineto( mousx, mousy );
+   
+   // draw "x-axis"
+   moveto( 0, yres/2 );
+   lineto( xres, yres/2 );
+   
+   // draw "y-axis"
+   moveto( xres/2, 0 );
+   lineto( xres/2, yres );   
+
+   // project mouse vec onto our axis
+   project( u_t, xaxis_t, w_t );   
+
+   // Draw the projection
+   moveto( xres/2, yres/2 );
+   setcol( 255,0,0 );
+   lineto( w_t.x, yres/2 );
+
+   // calc z vector
+   z_t.x = u_t.x - w_t.x;
+   z_t.y = u_t.y - w_t.y;   
+
+   // Draw the z vector 
+   setcol( 255, 0, 0 );
+   moveto( xres/2, yres/2 );
+   lineto( z_t.x+xres/2, z_t.y );   
+
+   // print more vector vals at mouse
+   setcol( 255, 0, 0 );
+   moveto( mousx, mousy + 20 );
+   printf( "(%f, %f)", w_t.x, w_t.y );
+   setcol( 255, 0, 255 );
+   moveto( mousx, mousy + 30 );
+   printf( "(%f, %f)", z_t.x, z_t.y );
+   
+   // A special case of SAT with only AABB's.
+   // draw a rect to collided with
+   setcol( 0,255,0 );
+   draw_rect( r1.x, r1.y, r1.w, r1.h );
+   // Draw a square at the mouse
+   setcol( 255,0,0 );
+   draw_rect( r2.x, r2.y, r2.w, r2.h );
+   
+   // project r1 onto x-axis
+   projectrect( r1, xaxis_t );
+   // project r2 onto x-axis
+   projectrect( r2, xaxis_t );
+   
+   // project r1 onto x-axis
+   projectrect( r1, yaxis_t );
+   // project r2 onto x-axis
+   projectrect( r2, yaxis_t );
+   
+   // check for collision     
+   col = overlapping( r1, r2 );
+   //vec2d_t off;
+   //aabb_collision( r2, r1, off );
+   // move r1 to off
+   moveto( mousx, mousy + 40 );
+   printf( "offset x: %f, y: %f", r1.x, r1.y );
+   moveto( mousx, mousy + 50 );
+   printf( "collision: %f", col );
+}
+
+// Change this to draw out from the center?
+draw_rect( x,y,w,h ) {
+   // calc the corner points from the
+   // center.
+   hw = w/2;
+   hh = h/2;
+   
+   vec2d_t p1;
+   vec2d_t p2;
+   vec2d_t p3;
+   vec2d_t p4;
+   
+   p1.x = x - hw;
+   p1.y = y - hh;
+   p2.x = x + hw;
+   p2.y = y - hh;
+   p3.x = x + hw;
+   p3.y = y + hh;
+   p4.x = x - hw;
+   p4.y = y + hh;
+   
+   moveto(p1.x, p1.y);
+   lineto(p2.x, p2.y);
+   moveto(p2.x, p2.y);
+   lineto(p3.x, p3.y);
+   moveto(p3.x, p3.y);
+   lineto(p4.x, p4.y);
+   moveto(p4.x, p4.y);
+   lineto(p1.x, p1.y);
+}
+
+// Project a rectangle onto the given axis
+// This is mainly a shortcut
+projectrect ( rect_t r, vec2d_t axis ) {
+   // project the first point to the axis
+   // project the thirs point to the axis
+   // find the difference between them and 
+   // that is the projection on the axis
+   vec2d_t p1;
+   p1.x = r.x;
+   p1.y = r.y;
+   vec2d_t p3;
+   p3.x = p1.x + r.w;
+   p3.y = p1.y + r.h;
+   
+   vec2d_t proj1;
+   project( p1, axis, proj1 );
+   
+   vec2d_t proj2;
+   project( p3, axis, proj2 );
+
+   // draw diff between proj1 and proj2
+   setcol( 0,0,255 );
+   moveto( proj1.x-r.w/2, proj1.y+yres/2 );
+   lineto( proj2.x-r.w/2, proj2.y+yres/2 );
+}
+
+// calculate the axes we need to project to
+getaxes (  ) {
+
+}
+
+// Special case of SAT algorithm for
+// AABB's only.
+aabb_collision ( rect_t a, rect_t b, vec2d_t offset ) { 
+   if (a.x-a.w/2 < b.x+b.w/2 &&
+      a.x+a.w/2 > b.x-b.w/2 &&
+      a.y-a.h/2 < b.y+b.h/2 &&
+      a.y+a.h/2 > b.y-b.h/2) {
+               
+      // So, we can detect a collision just fine.
+      // but how can I resolve the collision properly?
+      // Ideally we would just move the player out of the rectangle
+      // by the amount of overlap
+                                               
+      //p.xvel = 0;
+      //p.yvel = 0;
+      
+   }
+}
+
+overlapping ( rect_t a, rect_t b ) {
+   setcol( 0, 255, 255 );
+   moveto( a.x-a.w/2, a.y-a.h/2 );
+   lineto( a.x+a.w/2, a.y+a.h/2 );
+   moveto( b.x-b.w/2, b.y-b.h/2 );
+   lineto( b.x+b.w/2, b.y+b.h/2 );
+   
+   return ((a.x-a.w/2 < b.x+b.w/2 && a.x+a.w/2 > b.x-b.w/2) &&
+           (a.y-a.h/2 < b.y+b.h/2 && a.y+a.h/2 > b.y-b.h/2))
+}
+
+// ======== vector maths ========
+project ( vec2d_t u, vec2d_t v, vec2d_t res ) {
+   // [(u dot v)/(u dot u)]*u
+   udv = dot( u, v );
+   vdv = dot( v, v );
+   res.x = (udv/vdv)*v.x;
+   res.y = (udv/vdv)*v.y;
+}
+
+dot ( vec2d_t u, vec2d_t v ) {
+   // u1*v1 + u2*v2
+   return u.x*v.x + u.y*v.y;
+}
+
+dot_2d ( x1, y1, x2, y2 ) {
+   return (x1*x2)+(y1*y2);
+}
+
+len ( vec2d_t u ) {
+   sqrt ( u.x*u.x + u.y*u.y );
+}
+// ==============================
