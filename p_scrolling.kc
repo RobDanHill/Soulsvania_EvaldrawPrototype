@@ -17,8 +17,6 @@ static grav = 10.0;
 static jump_vel = 450.0;  
 static p_movesp = 200.0; 
 struct {
-   x;
-   y;
    w;
    h;
    xvel;
@@ -89,8 +87,6 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       p.map.y = p.tile.y*tilesizy;*/
 
       // init the player
-      p.x = 32*tilesizx + tilesizx/2;
-      p.y = 15*tilesizy + tilesizy/2;
       p.tile.x = 20; p.tile.y = 10;
       p.map.x = p.tile.x*tilesizx+tilesizx/2;
       p.map.y = p.tile.y*tilesizy;
@@ -100,8 +96,8 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       p.h = 48;
       p.grounded = false;
       // init player aabb
-      p.aabb.x = p.x;
-      p.aabb.y = p.y;
+      p.aabb.x = p.map.x;
+      p.aabb.y = p.map.y;
       p.aabb.w = p.w;
       p.aabb.h = p.h;
 
@@ -117,7 +113,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       //drawminimap_opt( 8, 20, 20 );
       drawplayer();
       //scroll( dtime*256 );
-      moveplayer( dtime*256, dtime*256 );
+      //moveplayer( dtime*256, dtime*256 );
       p_update( p, dtime );
       dtime = stime - otime;
       refresh();
@@ -157,29 +153,35 @@ p_update(player_t p, dt) {
       p.yvel = p.yvel + grav;
    }
    // apply movement
-   p_move( p, dt );
+   //p_move( p, dt );
+   moveplayer( dt, dt );
    
    // check for collisions against the world
    aabb_collision( p, dt );
    
    p.aabb.x += p.xvel * dt;
-   p.aabb.y += p.yvel * dt;
-      
-   p.x = p.aabb.x;
-   p.y = p.aabb.y;   
+   p.aabb.y += p.yvel * dt;  
    
-   p.map.x = floor( p.x/tilesizx );
-   p.map.y = floor( p.y/tilesizy );
+   // update the player map coords
+   p.map.x = p.aabb.x;
+   p.map.y = p.aabb.y;
+   
 }
 
-p_move( player_t p, dt ) {
+moveplayer( dx, dy ) {
    // Player movement
    if (keystatus[0xcb] == 1) {
-      p.xvel = -1 * p_movesp;
+      if ( p.map.x > 0 ) {
+         p.xvel = -1 * p_movesp;
+         if ( p.screen.x == screenxres/2 ) parallax.x += dx/scale;
+      }
    }
      
    if (keystatus[0xcd] == 1) {
-      p.xvel = p_movesp;
+      if ( p.map.x < tilesizx*WORLD_LENGTH_TILES ) {
+         p.xvel = p_movesp;
+         if ( p.screen.x == screenxres/2 ) parallax.x -= dx/scale;
+      }
    }
    
    if (keystatus[0xcb] == 0
@@ -189,50 +191,15 @@ p_move( player_t p, dt ) {
             
    if (keystatus[0x39] == 1) {
       //p_jump(p, dt);
-      p.yvel = -1 * jump_vel;
-   }
-   
-   if (keystatus[0xd0] == 1) {
-      //p.y += 10;
-   } 
-}
-
-p_jump( player_t p, dt ) {
-   p.yvel = -1 * jump_vel;
-}
-
-p_apply_grav( player_t p, dt ) {
-   p.yvel = p.yvel + grav;
-} 
-// END PLAYER FUNCTIONS =============================================
-
-moveplayer( dx, dy ) {
-   screenx = p.map.x - screenxres/2;
-   screeny = p.map.y - screenyres/2;
-   if ( keystatus[0xcb] ) { // Left arrow-key
-      if ( p.map.x > 0 ) {
-         p.map.x -= dx;
-         if ( p.screen.x == screenxres/2 ) parallax.x += dx/scale;
-      }
-   } 
-   if ( keystatus[0xcd] ) { // Right arrow-key
-      if ( p.map.x < tilesizx*WORLD_LENGTH_TILES ) {
-         p.map.x += dx;
-         if ( p.screen.x == screenxres/2 ) parallax.x -= dx/scale;
-      }
-   } 
-   if ( keystatus[0xc8] ) {
       if ( p.map.y > 0 ) { 
-         p.map.y -= dy;
+         p.yvel = -1 * jump_vel;
          if ( p.screen.y == screenyres/2 ) parallax.y += dy/scale;
       }
-   } 
-   if ( keystatus[0xd0] ) {
-      if ( p.map.y < tilesizy*WORLD_HEIGHT_TILES ) {
-         p.map.y += dy;
-         if ( p.screen.y == screenyres/2 ) parallax.y -= dy/scale;
-      }
    }
+   
+   screenx = p.map.x - screenxres/2;
+   screeny = p.map.y - screenyres/2;
+   
    /* Update player tile here */
    p.tile.x = p.map.x/tilesizx;
    p.tile.y = p.map.y/tilesizy;
@@ -249,6 +216,15 @@ moveplayer( dx, dy ) {
    screenx = -max( 0, min( screenx, tilesizx*WORLD_LENGTH_TILES - screenxres ) );
    screeny = -max( 0, min( screeny, tilesizy*WORLD_HEIGHT_TILES - screenyres ) );
 }
+
+p_jump( player_t p, dt ) {
+   p.yvel = -1 * jump_vel;
+}
+
+p_apply_grav( player_t p, dt ) {
+   p.yvel = p.yvel + grav;
+} 
+// END PLAYER FUNCTIONS =============================================
 
 scroll ( movspd ) {
    //moveto( xres - 100, 25 );
@@ -290,8 +266,8 @@ drawplayer () {
    drawspr(
       p.screen.x,
       p.screen.y,
-      tilesizx/2,
-      tilesizy,
+      p.w/2,
+      p.h,
       0
    );
 }
@@ -330,20 +306,20 @@ drawworld_opt () {
 draw_debugplayer ( player_t p ) {
    // Draw a simple rect to be the player for now
    setcol( 255, 0, 0 );
-   draw_rect( p.x, p.y, p.w, p.h );
+   draw_rect( p.aabb.x, p.aabb.y, p.aabb.w, p.aabb.h );
    // draw the center of the player too.
-   moveto( p.x-1, p.y );
-   lineto( p.x+1, p.y );
+   moveto( p.map.x-1, p.map.y );
+   lineto( p.map.x+1, p.map.y );
    setcol( 255,255,255 );          
    
    // let's draw some debug nums
-   moveto( p.x, p.y-(p.h/2)-10 );
-   printf( "x: %.0f, y: %.0f", p.x, p.y );
-   moveto( p.x, p.y-(p.h/2)-20 );
+   moveto( p.map.x, p.map.y-(p.h/2)-10 );
+   printf( "x: %.0f, y: %.0f", p.map.x, p.map.y );
+   moveto( p.map.x, p.map.y-(p.h/2)-20 );
    printf( "mapx: %.0f, mapy: %.0f", p.map.x, p.map.y );
-   moveto( p.x, p.y-(p.h/2)-30 );
+   moveto( p.map.x, p.map.y-(p.h/2)-30 );
    printf( "xvel: %.0f, %.0f", p.xvel, p.yvel ); 
-   moveto( p.x, p.y-(p.h/2)-40 );
+   moveto( p.map.x, p.map.y-(p.h/2)-40 );
 }
 
 /* drawdebugmap() still needs to be refactored to implement
@@ -505,10 +481,6 @@ aabb_collision ( player_t p, dt ) {
    // use the blocks array to check for collisions
    for ( i=0; i<NUM_BLOCKS; i++ ) {
       rect_t b = blocks[i];
-      
-      setcol( 0x00ff00 );
-      setpix( b.x, b.y );
-      setcol( 0xffffff );
       
       if ( a.x+pw/2 > b.x-b.w/2 && a.x-pw/2 < b.x+b.w/2 ) {
          // check for and resolve y cols
