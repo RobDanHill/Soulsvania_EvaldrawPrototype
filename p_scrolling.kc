@@ -14,7 +14,7 @@ struct { x; y; } vec2d_t;
 
 static grav = 10.0;
 // Move these into the player struct
-static jump_vel = 450.0;  
+static jump_vel = 850.0;  
 static p_movesp = 200.0; 
 struct {
    w;
@@ -22,6 +22,7 @@ struct {
    xvel;
    yvel;
    grounded;
+   jumped;
    rect_t aabb;
    vec2d_t screen;// Screen coordinates of player
    vec2d_t map;   // Pixel location of player in map
@@ -95,6 +96,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       p.w = /*30*/tilesizx;            
       p.h = /*48*/tilesizy*2;
       p.grounded = false;
+      p.jumped = false;
       // init player aabb
       p.aabb.x = p.map.x;
       p.aabb.y = p.map.y;
@@ -115,6 +117,7 @@ static world[WORLD_HEIGHT_TILES][WORLD_LENGTH_TILES] = {
       //scroll( dtime*256 );
       //moveplayer( dtime*256, dtime*256 );
       p_update( p, dtime );
+      draw_debugplayer( p );
       dtime = stime - otime;
       refresh();
    }
@@ -146,12 +149,12 @@ init_blocks() {
 // PLAYER FUNCTIONS =================================================
 // update the player velocity and such
 p_update(player_t p, dt) {    
-   
    // apply gravity
    //p_apply_grav( p, dt );
    if ( p.grounded == false ) {
       p.yvel = p.yvel + grav;
    }
+
    // apply movement
    //p_move( p, dt );
    moveplayer( dt, dt );
@@ -168,6 +171,9 @@ p_update(player_t p, dt) {
 }
 
 moveplayer( dx, dy ) {
+   //can_jump = false;
+   //jumped = false;
+   
    // Player movement
    if (keystatus[0xcb] == 1) {
       if ( p.map.x > 0 ) {
@@ -186,15 +192,29 @@ moveplayer( dx, dy ) {
    if (keystatus[0xcb] == 0
       && keystatus[0xcd] == 0) {
       p.xvel = 0;
-   }                    
-            
-   if (keystatus[0x39] == 1) {
-      //p_jump(p, dt);
-      if ( p.map.y > 0 ) { 
+   }               
+
+   // can the player jump?
+   // if the player is grounded, the jump key isn't down then the player may jump.
+   // need to know when the key is up
+   // has the player jumped and are the grounded and is the key pressed
+   // jumped is false if the jump key isn't down and the player is on the ground
+   if ( keystatus[0x39] == 1 && p.grounded == false ) {
+      p.jumped = true;
+   }
+   
+   if ( keystatus[0x39] == 1 && p.jumped == false ) {
+      // variable height jump and stop from holding jump to keep hopping
+      if ( p.map.y > 0 ) {
          p.yvel = -1 * jump_vel;
          if ( p.screen.y == screenyres/2 ) parallax.y += dy/scale;
       }
    }
+   
+   if ( keystatus[0x39] == 0 && p.grounded == true ) {
+      p.jumped = false;
+   }   
+
    
    screenx = p.map.x - screenxres/2;
    screeny = p.map.y - screenyres/2;
@@ -211,6 +231,8 @@ moveplayer( dx, dy ) {
    
    moveto( screenxres - 150, 25 );
    printf( "px: %g, py: %g", int( p.tile.x ), int( p.tile.y ) );
+   //moveto( p.screen.x, p.screen.y-(p.h/2)-60 );
+   //printf( "can jump: %.0f", can_jump );
    
    screenx = -max( 0, min( screenx, tilesizx*WORLD_LENGTH_TILES - screenxres ) );
    screeny = -max( 0, min( screeny, tilesizy*WORLD_HEIGHT_TILES - screenyres ) );
@@ -256,12 +278,12 @@ scroll ( movspd ) {
 
 drawplayer () {
    glsettex( "Images/alucardIdle1.png" );
-   draw_rect( 
+   /*draw_rect( 
       p.screen.x,
       p.screen.y, 
       p.aabb.w,
       p.aabb.h
-   );
+   );*/
    drawspr(
       p.screen.x,
       p.screen.y,
@@ -305,20 +327,19 @@ drawworld_opt () {
 draw_debugplayer ( player_t p ) {
    // Draw a simple rect to be the player for now
    setcol( 255, 0, 0 );
-   draw_rect( p.aabb.x, p.aabb.y, p.aabb.w, p.aabb.h );
-   // draw the center of the player too.
-   moveto( p.map.x-1, p.map.y );
-   lineto( p.map.x+1, p.map.y );
-   setcol( 255,255,255 );          
-   
+   draw_rect( p.screen.x, p.screen.y, p.aabb.w, p.aabb.h );
+   setcol( 255,255,255 );
    // let's draw some debug nums
-   moveto( p.map.x, p.map.y-(p.h/2)-10 );
-   printf( "x: %.0f, y: %.0f", p.map.x, p.map.y );
-   moveto( p.map.x, p.map.y-(p.h/2)-20 );
+   moveto( p.screen.x, p.screen.y-(p.h/2)-10 );
+   printf( "x: %.0f, y: %.0f", p.screen.x, p.screen.y );
+   moveto( p.screen.x, p.screen.y-(p.h/2)-20 );
    printf( "mapx: %.0f, mapy: %.0f", p.map.x, p.map.y );
-   moveto( p.map.x, p.map.y-(p.h/2)-30 );
+   moveto( p.screen.x, p.screen.y-(p.h/2)-30 );
    printf( "xvel: %.0f, %.0f", p.xvel, p.yvel ); 
-   moveto( p.map.x, p.map.y-(p.h/2)-40 );
+   moveto( p.screen.x, p.screen.y-(p.h/2)-40 );
+   printf( "grounded: %.0f", p.grounded );
+   moveto( p.screen.x, p.screen.y-(p.h/2)-50 );
+   printf( "keystatus: %.0f", keystatus[0x39] );
 }
 
 /* drawdebugmap() still needs to be refactored to implement
@@ -476,6 +497,7 @@ aabb_collision ( player_t p, dt ) {
    rect_t a = p.aabb;
    dx = p.xvel*dt; dy = p.yvel*dt;
    pw = a.w; ph = a.h;
+   grounded = false;
    on_ground = false;
       
    // use the blocks array to check for collisions
@@ -496,7 +518,7 @@ aabb_collision ( player_t p, dt ) {
             // move the player flush against the top of b
             a.y = b.y - b.h/2 - ph/2;
             p.yvel = 0;
-            on_ground = true;
+            //grounded = true;
          }
       }
       if ( a.y+ph/2 > b.y-b.h/2 && a.y-ph/2 < b.y+b.h/2 ) {
@@ -513,14 +535,29 @@ aabb_collision ( player_t p, dt ) {
             a.x = b.x - b.w/2 - pw/2;
             p.xvel = 0;
          }
-      }  
+      }
+      
+      if (grounded == true && a.y+ph/2 == b.y-b.h/2 && a.y+ph/2 + dy > b.y-b.h/2) {
+         on_ground = true;
+      }
    }
    
-   if ( on_ground == true ) {
-      p.grounded = true;
+   
+   
+
+   if ( world[int(p.tile.y)+1][int(p.tile.x)] == 1 ||
+          world[int(p.tile.y)+1][int(p.tile.x-p.w/2)] == 1 ||
+          world[int(p.tile.y)+1][int(p.tile.x+p.w/2)] == 1 ) {
+       p.grounded = true;
    } else {
       p.grounded = false;
    }
+   
+   /*if (on_ground == true) {
+      p.grounded = true;
+   } else if (on_ground == false) {
+      p.grounded = false;
+   }*/
 }
 
 // Simple aabb collision
